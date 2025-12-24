@@ -1,0 +1,173 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom styles for the game */
+
+body {
+  @apply bg-gray-900 text-white min-h-screen;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+}
+
+/* Game container - main layout */
+.game-container {
+  @apply flex flex-col items-center gap-8 py-4;
+}
+
+/* Game info header */
+.game-info-header {
+  @apply flex justify-center;
+}
+
+/* Players grid - responsive */
+.players-grid {
+  @apply grid gap-6 w-full max-w-5xl px-4;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+}
+
+/* Player seat wrapper */
+.player-seat {
+  @apply flex justify-center;
+}
+
+/* Player card */
+.player-card {
+  @apply flex flex-col items-center p-4 rounded-xl transition-all duration-300 bg-gray-800/50 min-w-[150px];
+}
+
+.player-card.active {
+  @apply ring-2 ring-yellow-400 animate-pulse-slow;
+}
+
+.player-card.eliminated {
+  @apply opacity-40 grayscale;
+}
+
+.player-card.thinking {
+  @apply animate-bounce-slow;
+}
+
+/* Avatar circle */
+.player-avatar {
+  @apply w-14 h-14 rounded-full flex items-center justify-center text-2xl font-bold text-white shadow-lg;
+}
+
+/* Debate chat */
+.debate-chat {
+  @apply bg-gray-800 rounded-lg p-4 max-h-60 overflow-y-auto;
+}
+
+.debate-message {
+  @apply mb-2 p-2 rounded-lg;
+}
+
+/* Word bubble */
+.word-bubble {
+  @apply inline-block px-3 py-1 rounded-full text-xs font-medium;
+  max-width: 100%;
+  word-break: break-word;
+}
+
+/* Timer */
+.timer {
+  @apply text-4xl font-mono font-bold;
+}
+
+.timer.warning {
+  @apply text-yellow-400;
+}
+
+.timer.danger {
+  @apply text-red-500 animate-pulse;
+}
+
+/* Voting panel */
+.vote-button {
+  @apply w-full py-3 px-4 rounded-lg transition-all duration-200;
+}
+
+.vote-button:hover:not(:disabled) {
+  @apply scale-105;
+}
+
+.vote-button:disabled {
+  @apply opacity-50 cursor-not-allowed;
+}
+
+/* Result overlay */
+.result-overlay {
+  @apply fixed inset-0 bg-black/80 flex items-center justify-center z-50;
+}
+
+/* Leaderboard */
+.leaderboard {
+  @apply bg-gray-800 rounded-lg p-4;
+}
+
+.leaderboard-entry {
+  @apply flex items-center justify-between py-2 border-b border-gray-700 last:border-0;
+}
+
+/* Slider */
+input[type="range"] {
+  @apply w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  @apply appearance-none w-4 h-4 bg-blue-500 rounded-full cursor-pointer;
+}
+
+/* Center table display - deprecated, kept for backwards compatibility */
+.table-center {
+  @apply bg-gray-800/90 rounded-xl px-6 py-4 flex flex-col items-center justify-center;
+}
+
+/* Animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.5s ease-out;
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-scale-in {
+  animation: scaleIn 0.3s ease-out;
+}
+
+/* Word reveal animation */
+@keyframes revealWord {
+  0% {
+    opacity: 0;
+    transform: scale(0.5) rotateY(90deg);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.2) rotateY(0deg);
+  }
+  100% {
+    transform: scale(1) rotateY(0deg);
+  }
+}
+
+.animate-reveal {
+  animation: revealWord 1s ease-out;
+}
