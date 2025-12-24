@@ -77,7 +77,7 @@ class GameManager:
             player = Player(
                 id=f"player_{i}",
                 model=p_config.model if not is_human else "human",
-                display_name=p_config.display_name if not is_human else "Tu",
+                display_name=p_config.display_name if not is_human else config.human_name,
                 color=p_config.color if not is_human else "#FFD700",
                 is_human=is_human,
             )

@@ -2,22 +2,12 @@ import React, { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useGame } from '../context/GameContext'
 
-const PLAYER_COLORS = {
-  'gemma3': '#FF6B6B',
-  'mistral': '#4ECDC4',
-  'llama3': '#45B7D1',
-  'phi4': '#96CEB4',
-  'qwen3': '#DDA0DD',
-  'Tu': '#FFD700',
-}
-
 const PLAYER_ICONS = {
   'gemma3': '💎',
   'mistral': '🌪️',
   'llama3': '🦙',
   'phi4': 'Φ',
   'qwen3': '🐼',
-  'Tu': '👤',
 }
 
 export default function DebateChat({ onSendMessage }) {
@@ -76,8 +66,10 @@ export default function DebateChat({ onSendMessage }) {
             </div>
           ) : (
             state.debateMessages.map((msg, index) => {
-              const color = PLAYER_COLORS[msg.player_name] || '#888'
-              const icon = PLAYER_ICONS[msg.player_name] || '🤖'
+              // Find player by name to get their properties
+              const player = state.players.find(p => p.display_name === msg.player_name)
+              const color = player?.color || '#888'
+              const icon = player?.is_human ? '👤' : (PLAYER_ICONS[msg.player_name] || '🤖')
 
               return (
                 <motion.div

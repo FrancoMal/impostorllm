@@ -8,8 +8,9 @@ export default function ImpostorGuess({ onGuess }) {
   const [hasGuessed, setHasGuessed] = useState(false)
 
   const humanPlayer = state.players.find(p => p.is_human)
-  const impostor = state.players.find(p => p.is_impostor)
-  const isHumanImpostor = humanPlayer && impostor && humanPlayer.id === impostor.id
+  // Find impostor using impostorId from game state
+  const impostor = state.players.find(p => p.id === state.impostorId)
+  const isHumanImpostor = humanPlayer && state.impostorId && humanPlayer.id === state.impostorId
 
   // Get all words said during the game
   const allWords = state.players

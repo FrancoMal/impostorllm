@@ -9,7 +9,11 @@ const PLAYER_ICONS = {
   'llama3': '🦙',
   'phi4': 'Φ',
   'qwen3': '🐼',
-  'Tu': '👤',
+}
+
+const getPlayerIcon = (player) => {
+  if (player?.is_human) return '👤'
+  return PLAYER_ICONS[player?.display_name] || '🤖'
 }
 
 export default function GameResult({ onNewGame }) {
@@ -68,7 +72,7 @@ export default function GameResult({ onNewGame }) {
                   className="w-8 h-8 rounded-full flex items-center justify-center"
                   style={{ backgroundColor: impostor?.color }}
                 >
-                  {PLAYER_ICONS[impostor?.display_name] || '🤖'}
+                  {getPlayerIcon(impostor)}
                 </div>
                 <span className="font-medium">({impostor?.display_name})</span>
               </div>

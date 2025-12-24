@@ -6,6 +6,7 @@ export default function GameSetup() {
   const [mode, setMode] = useState('all_ai')
   const [debateDuration, setDebateDuration] = useState(60)
   const [humanPosition, setHumanPosition] = useState(0)
+  const [playerName, setPlayerName] = useState('')  // Custom player name
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState(null)
 
@@ -73,6 +74,7 @@ export default function GameSetup() {
         mode,
         debate_duration: debateDuration,
         human_position: humanPosition,
+        human_name: playerName.trim() || 'Jugador',  // Default name if empty
       }
 
       if (singleModelMode) {
@@ -201,6 +203,23 @@ export default function GameSetup() {
               </button>
             </div>
           </div>
+
+          {/* Player name input - only in human mode */}
+          {mode === 'human_player' && (
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                Tu nombre
+              </label>
+              <input
+                type="text"
+                value={playerName}
+                onChange={(e) => setPlayerName(e.target.value)}
+                placeholder="Escribe tu nombre..."
+                className="w-full p-3 bg-gray-700 rounded-lg border border-gray-600 focus:border-blue-500 focus:outline-none"
+                maxLength={15}
+              />
+            </div>
+          )}
 
           {/* Single-model selection OR Player selection */}
           {singleModelMode ? (

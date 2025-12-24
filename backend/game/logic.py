@@ -32,6 +32,8 @@ class GameController:
         self.broadcast = broadcast
         self._debate_task: Optional[asyncio.Task] = None
         self._tie_attempts = 0  # Track tie attempts to avoid infinite loops
+        self._ai_voting_complete = False  # Flag to track AI voting completion
+        self._human_vote_pending = None  # Store human vote if submitted early
 
     async def call_with_memory(self, player: Player, prompt: str) -> str:
         """Call LLM with conversation memory for this player."""
@@ -82,15 +84,20 @@ class GameController:
         # Start word round
         await self.run_word_round()
 
-    async def run_word_round(self):
-        """Run the word round where each player says a word."""
+    async def run_word_round(self, start_from: int = 0):
+        """Run the word round where each player says a word.
+
+        Args:
+            start_from: Index to start from (used when resuming after human input)
+        """
         game = self.game
         if not game:
             return
 
         active_players = [p for p in game.players if not p.is_eliminated]
 
-        for i, player in enumerate(active_players):
+        for i in range(start_from, len(active_players)):
+            player = active_players[i]
             game.current_player_index = i
 
             await self.broadcast({
@@ -103,6 +110,7 @@ class GameController:
 
             if player.is_human:
                 # Wait for human input (handled via WebSocket)
+                # Store current index so we can resume from next player
                 return
 
             # AI player
@@ -166,7 +174,8 @@ class GameController:
             return
 
         active_players = [p for p in game.players if not p.is_eliminated]
-        current_player = active_players[game.current_player_index]
+        current_index = game.current_player_index
+        current_player = active_players[current_index]
 
         if not current_player.is_human:
             return
@@ -183,8 +192,8 @@ class GameController:
             }
         })
 
-        # Continue with remaining AI players
-        await self.run_word_round()
+        # Continue with remaining players starting from NEXT index
+        await self.run_word_round(start_from=current_index + 1)
 
     async def start_debate(self):
         """Start the debate phase."""
@@ -318,6 +327,10 @@ class GameController:
         if not game:
             return
 
+        # Reset voting state
+        self._ai_voting_complete = False
+        self._human_vote_pending = None
+
         await self.broadcast({
             "type": "phase_change",
             "data": {"phase": GamePhase.VOTING.value}
@@ -416,12 +429,20 @@ class GameController:
 
             await asyncio.sleep(0.5)
 
+        # Mark AI voting as complete
+        self._ai_voting_complete = True
+
         # Check if all non-human players have voted
         game = self.game
         human_player = next((p for p in game.players if p.is_human and not p.is_eliminated), None)
         if not human_player:
             # All AI, process elimination
             await self.process_elimination()
+        elif self._human_vote_pending:
+            # Human already voted while AIs were voting, process now
+            voted_for_id = self._human_vote_pending
+            self._human_vote_pending = None
+            await self._complete_human_vote(human_player, voted_for_id)
 
     async def handle_human_vote(self, voted_for_id: str):
         """Handle when a human player votes."""
@@ -433,7 +454,51 @@ class GameController:
         if not human_player:
             return
 
-        game_manager.record_vote(self.game_id, human_player.id, voted_for_id)
+        # If AI voting is not complete yet, store the vote for later
+        if not self._ai_voting_complete:
+            self._human_vote_pending = voted_for_id
+            # Still broadcast the vote so UI updates
+            voted_for = next((p for p in game.players if p.id == voted_for_id), None)
+            if voted_for:
+                await self.broadcast({
+                    "type": "player_voted",
+                    "data": {
+                        "voter_id": human_player.id,
+                        "voter_name": human_player.display_name,
+                        "voted_for_name": voted_for.display_name,
+                        "justification": ""
+                    }
+                })
+            return
+
+        # AI voting is complete, process immediately
+        await self._complete_human_vote(human_player, voted_for_id)
+
+    async def _complete_human_vote(self, human_player, voted_for_id: str):
+        """Complete the human vote and process elimination."""
+        game = self.game
+        if not game:
+            return
+
+        # Find who was voted for
+        voted_for = next((p for p in game.players if p.id == voted_for_id), None)
+        if not voted_for:
+            return
+
+        # Record the vote
+        game_manager.record_vote(self.game_id, human_player.id, voted_for_id, "Voto del jugador humano")
+
+        # Broadcast the human vote like AI votes (if not already broadcast)
+        if not self._human_vote_pending:  # Only broadcast if not already done
+            await self.broadcast({
+                "type": "player_voted",
+                "data": {
+                    "voter_id": human_player.id,
+                    "voter_name": human_player.display_name,
+                    "voted_for_name": voted_for.display_name,
+                    "justification": ""
+                }
+            })
 
         # Process elimination
         await self.process_elimination()

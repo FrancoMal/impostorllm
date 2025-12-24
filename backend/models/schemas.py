@@ -120,6 +120,7 @@ class GameConfig(BaseModel):
     mode: GameMode = GameMode.ALL_AI
     debate_duration: int = 60
     human_position: int = 0  # 0-4, only used in HUMAN_PLAYER mode
+    human_name: str = "Jugador"  # Custom name for human player
     selected_players: list[str] = []  # List of display_names to include (empty = use defaults)
     single_model: str = ""  # If set, use this model for all players (e.g., "qwen3:8b")
     player_count: int = 5  # Number of players for single_model mode (3-6)
