@@ -1,7 +1,9 @@
-import React from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
 import { useGame } from '../context/GameContext'
 import Leaderboard from './Leaderboard'
+
+const AUTO_CONTINUE_SECONDS = 5
 
 const PLAYER_ICONS = {
   'gemma3': '💎',
@@ -16,11 +18,45 @@ const getPlayerIcon = (player) => {
   return PLAYER_ICONS[player?.display_name] || '🤖'
 }
 
-export default function GameResult({ onNewGame }) {
+export default function GameResult({ onNewGame, onContinue }) {
   const { state } = useGame()
+  const canContinue = !!state.lastConfig
+  const [countdown, setCountdown] = useState(AUTO_CONTINUE_SECONDS)
+  const [paused, setPaused] = useState(false)
+  const countdownRef = useRef(null)
+  const hasStartedRef = useRef(false)
 
   const impostor = state.players.find(p => p.id === state.impostorId)
   const innocentsWon = state.winner === 'innocents'
+
+  // Auto-continue countdown - always runs if canContinue
+  useEffect(() => {
+    if (!canContinue || paused) return
+
+    if (countdown <= 0 && !hasStartedRef.current) {
+      hasStartedRef.current = true
+      onContinue()
+      return
+    }
+
+    if (countdown > 0) {
+      countdownRef.current = setTimeout(() => {
+        setCountdown(prev => prev - 1)
+      }, 1000)
+    }
+
+    return () => clearTimeout(countdownRef.current)
+  }, [countdown, canContinue, paused, onContinue])
+
+  const handlePause = () => {
+    setPaused(true)
+    clearTimeout(countdownRef.current)
+  }
+
+  const handleNewGame = () => {
+    handlePause()
+    onNewGame()
+  }
 
   return (
     <motion.div
@@ -123,13 +159,45 @@ export default function GameResult({ onNewGame }) {
           </div>
         )}
 
-        {/* New game button */}
-        <button
-          onClick={onNewGame}
-          className="w-full py-3 bg-blue-600 hover:bg-blue-700 rounded-lg font-medium text-lg transition-colors"
-        >
-          🎮 Nueva Partida
-        </button>
+        {/* Game buttons */}
+        <div className="space-y-3">
+          {canContinue && (
+            <div className="relative">
+              <button
+                onClick={onContinue}
+                className="w-full py-3 bg-green-600 hover:bg-green-700 rounded-lg font-medium text-lg transition-colors"
+              >
+                {!paused && countdown > 0 ? (
+                  <>🔄 Siguiente partida en {countdown}s...</>
+                ) : (
+                  <>🔄 Continuar Partida</>
+                )}
+              </button>
+              {!paused && countdown > 0 && (
+                <div className="mt-2">
+                  <div className="h-1 bg-gray-700 rounded-full overflow-hidden">
+                    <motion.div
+                      className="h-full bg-green-400"
+                      initial={{ width: '100%' }}
+                      animate={{ width: '0%' }}
+                      transition={{ duration: AUTO_CONTINUE_SECONDS, ease: 'linear' }}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+          <button
+            onClick={handleNewGame}
+            className={`w-full py-3 rounded-lg font-medium text-lg transition-colors ${
+              canContinue
+                ? 'bg-gray-600 hover:bg-gray-700'
+                : 'bg-blue-600 hover:bg-blue-700'
+            }`}
+          >
+            🎮 {canContinue ? 'Nueva Configuración' : 'Nueva Partida'}
+          </button>
+        </div>
       </div>
     </motion.div>
   )

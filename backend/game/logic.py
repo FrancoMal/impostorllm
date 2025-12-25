@@ -255,13 +255,19 @@ class GameController:
                 # Get the word this player said in the word round
                 player_said = player.words_said[-1] if player.words_said else ""
 
+                # Get active and eliminated player names
+                active_names = [p.display_name for p in active_players]
+                eliminated_names = [p.display_name for p in game.players if p.is_eliminated]
+
                 try:
                     prompt = format_debate_prompt(
                         player.display_name,
                         player.word,
                         all_words,
                         debate_history,
-                        player_said_word=player_said
+                        player_said_word=player_said,
+                        active_players=active_names,
+                        eliminated_players=eliminated_names
                     )
 
                     message = await self.call_with_memory(player, prompt)
@@ -365,12 +371,18 @@ class GameController:
             # Get the word this player said
             player_said_word = player.words_said[-1] if player.words_said else ""
 
+            # Get active and eliminated player names (excluding self for voting)
+            active_names = [p.display_name for p in active_players if p.id != player.id]
+            eliminated_names = [p.display_name for p in game.players if p.is_eliminated]
+
             # Format prompt with full context
             prompt = format_voting_prompt(
                 player.display_name,
                 player_words,
                 full_debate,
-                player_said_word
+                player_said_word,
+                active_players=active_names,
+                eliminated_players=eliminated_names
             )
 
             justification = ""

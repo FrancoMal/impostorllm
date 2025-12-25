@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useGame } from '../context/GameContext'
 
 export default function GameSetup() {
-  const { setGame } = useGame()
+  const { setGame, setConfig } = useGame()
   const [mode, setMode] = useState('all_ai')
   const [debateDuration, setDebateDuration] = useState(60)
   const [humanPosition, setHumanPosition] = useState(0)
@@ -21,6 +21,9 @@ export default function GameSetup() {
   const [availableModels, setAvailableModels] = useState([])
   const [singleModelNames, setSingleModelNames] = useState([])
   const [playerCount, setPlayerCount] = useState(5)
+
+  // Auto-repeat state
+  const [autoRepeat, setAutoRepeat] = useState(false)
 
   // Fetch available players on mount
   useEffect(() => {
@@ -75,6 +78,7 @@ export default function GameSetup() {
         debate_duration: debateDuration,
         human_position: humanPosition,
         human_name: playerName.trim() || 'Jugador',  // Default name if empty
+        auto_repeat: autoRepeat,
       }
 
       if (singleModelMode) {
@@ -95,6 +99,12 @@ export default function GameSetup() {
       }
 
       const data = await response.json()
+
+      // Save config for game continuation (only if auto-repeat is enabled)
+      if (autoRepeat) {
+        setConfig(payload)
+      }
+
       setGame({
         id: data.game_id,
         mode: data.mode,
@@ -373,7 +383,7 @@ export default function GameSetup() {
             <input
               type="range"
               min="30"
-              max="180"
+              max="300"
               step="10"
               value={debateDuration}
               onChange={(e) => setDebateDuration(Number(e.target.value))}
@@ -381,8 +391,30 @@ export default function GameSetup() {
             />
             <div className="flex justify-between text-xs text-gray-500 mt-1">
               <span>30s</span>
-              <span>3 min</span>
+              <span>5 min</span>
             </div>
+          </div>
+
+          {/* Auto-repeat toggle */}
+          <div className="flex items-center justify-between p-4 bg-gray-700/50 rounded-lg">
+            <div>
+              <div className="font-medium">Repetir indefinidamente</div>
+              <div className="text-xs text-gray-400">
+                Las partidas continúan automáticamente
+              </div>
+            </div>
+            <button
+              onClick={() => setAutoRepeat(!autoRepeat)}
+              className={`relative w-14 h-7 rounded-full transition-colors ${
+                autoRepeat ? 'bg-green-600' : 'bg-gray-600'
+              }`}
+            >
+              <span
+                className={`absolute top-1 w-5 h-5 bg-white rounded-full transition-transform ${
+                  autoRepeat ? 'translate-x-8' : 'translate-x-1'
+                }`}
+              />
+            </button>
           </div>
 
           {/* Error message */}

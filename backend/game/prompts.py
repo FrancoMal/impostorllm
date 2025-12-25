@@ -30,7 +30,7 @@ Palabras dichas hasta ahora:
 - Decir "{palabra}" directamente
 - Sinonimos muy obvios o la categoria directa
 - Repetir alguna de {palabras_anteriores} o muy similares
-
+- tampoco puedes decir la {palabra}
 Responde con UNA sola palabra en espanol:"""
 
 WORD_ROUND_PROMPT_IMPOSTOR = """JUEGO: Palabra Impostor - Ronda {ronda}
@@ -67,6 +67,10 @@ Conoces la palabra secreta: {palabra_secreta} y no puedes decirla en el debate.
 (Esta PROHIBIDO decirla o usar sinonimos directos)
 Tu dijiste: "{tu_palabra}"
 
+=== JUGADORES EN JUEGO ===
+Activos: {jugadores_activos}
+{jugadores_eliminados}
+
 === PALABRAS DICHAS ===
 {todas_las_palabras}
 
@@ -74,7 +78,8 @@ Tu dijiste: "{tu_palabra}"
 {historial_debate}
 
 === TU MISION ===
-- Defender y/o cuestionar a alguien
+- El debate es para acusar a alguien, no es necesario que todas las palabras tengan relacion en sí, solo relacion en torno a la {palabra_secreta}
+- Defender y/o cuestionar a alguien (puedes cambiar de opinion)
 - La idea es que tengas a alguien en la mira por la palabra que dijo anteriormente. La que menos relacione con el tema es la que se acusa y la justificación con la que se definede no te calza.
 
 === COMO JUGAR EL DEBATE ===
@@ -84,6 +89,8 @@ DEFENDER tu palabra:
 - Para justificarte no puedes decir la palabra secreta, es razon de expulsión a ti mismo.
 - tambien puede defender a alguien si le parece buena la palabra que dijo, esto ayuda a ganar confianza tambien.
 INVESTIGAR al impostor:
+- Duda de las palabras que no tinen sentido para nada
+- No olvides, lo mas imporante es {todas_las_palabras} que dijeron para deducir quien es el impostor.
 - Quien dio una palabra DESCONECTADA del tema?
 - Deduce quien puede ser a través de descarte de posibles candidatos
 
@@ -95,6 +102,10 @@ Eres: {modelo}
 === ERES EL IMPOSTOR ===
 NO conoces la palabra secreta.
 Tu dijiste: "{tu_palabra}"
+
+=== JUGADORES EN JUEGO ===
+Activos: {jugadores_activos}
+{jugadores_eliminados}
 
 === PALABRAS DICHAS ===
 {todas_las_palabras}
@@ -126,6 +137,10 @@ VOTING_PROMPT = """VOTACION FINAL - Eres {modelo}
 
 === TU PARTICIPACION ===
 Tu dijiste la palabra: "{tu_palabra}"
+
+=== JUGADORES EN JUEGO ===
+Activos (puedes votar por ellos): {jugadores_activos}
+{jugadores_eliminados}
 
 === TODAS LAS PALABRAS DICHAS (por ronda) ===
 {palabras_jugadores}
@@ -279,7 +294,9 @@ def format_debate_prompt(
     word: str,
     all_words: list[tuple[str, str]],
     debate_history: list[tuple[str, str]],
-    player_said_word: str = ""
+    player_said_word: str = "",
+    active_players: list[str] = None,
+    eliminated_players: list[str] = None
 ) -> str:
     """Format the debate prompt - different for impostor vs innocent."""
     # Include turn number to show who spoke first vs who could have copied
@@ -290,6 +307,13 @@ def format_debate_prompt(
     else:
         history_str = "  (El debate acaba de comenzar)"
 
+    # Format active and eliminated players
+    activos_str = ", ".join(active_players) if active_players else "todos"
+    if eliminated_players:
+        eliminados_str = f"Eliminados: {', '.join(eliminated_players)} (ya no participan)"
+    else:
+        eliminados_str = ""
+
     # Use different template based on role - impostor gets "IMPOSTOR" as word
     is_impostor = word.upper() == "IMPOSTOR"
     template = DEBATE_PROMPT_IMPOSTOR if is_impostor else DEBATE_PROMPT_INNOCENT
@@ -298,6 +322,8 @@ def format_debate_prompt(
         return template.format(
             modelo=model_name,
             tu_palabra=player_said_word,
+            jugadores_activos=activos_str,
+            jugadores_eliminados=eliminados_str,
             todas_las_palabras=words_str,
             historial_debate=history_str
         )
@@ -307,6 +333,8 @@ def format_debate_prompt(
             modelo=model_name,
             palabra_secreta=word,  # The actual secret word for context
             tu_palabra=player_said_word,
+            jugadores_activos=activos_str,
+            jugadores_eliminados=eliminados_str,
             todas_las_palabras=words_str,
             historial_debate=history_str
         )
@@ -316,7 +344,9 @@ def format_voting_prompt(
     model_name: str,
     player_words: list[tuple[str, str]],
     debate_history: list[tuple[str, str]] = None,
-    player_said_word: str = ""
+    player_said_word: str = "",
+    active_players: list[str] = None,
+    eliminated_players: list[str] = None
 ) -> str:
     """Format the voting prompt with FULL debate context and justification request."""
     words_str = "\n".join([f"  #{i+1} {name}: {w}" for i, (name, w) in enumerate(player_words)])
@@ -331,9 +361,18 @@ def format_voting_prompt(
     valid_names = [name for name, _ in player_words]
     names_str = ", ".join(valid_names[:-1]) + " o " + valid_names[-1] if len(valid_names) > 1 else valid_names[0] if valid_names else ""
 
+    # Format active and eliminated players
+    activos_str = ", ".join(active_players) if active_players else names_str
+    if eliminated_players:
+        eliminados_str = f"Eliminados: {', '.join(eliminated_players)} (NO puedes votar por ellos)"
+    else:
+        eliminados_str = ""
+
     return VOTING_PROMPT.format(
         modelo=model_name,
         tu_palabra=player_said_word,
+        jugadores_activos=activos_str,
+        jugadores_eliminados=eliminados_str,
         palabras_jugadores=words_str,
         debate_completo=debate_str,
         nombres_validos=names_str

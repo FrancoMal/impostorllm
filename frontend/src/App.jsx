@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react'
+import React, { useState, useCallback, useEffect, useRef } from 'react'
 import { GameProvider, useGame } from './context/GameContext'
 import { useWebSocket } from './hooks/useWebSocket'
 import GameSetup from './components/GameSetup'
@@ -12,7 +12,7 @@ import Timer from './components/Timer'
 import SpectatorInfo from './components/SpectatorInfo'
 
 function GameApp() {
-  const { state, handleMessage, setConnected, reset } = useGame()
+  const { state, handleMessage, setConnected, reset, fullReset, setGame } = useGame()
   const [ws, setWs] = useState(null)
 
   const onMessage = useCallback((message) => {
@@ -38,6 +38,34 @@ function GameApp() {
     send('start_game')
   }, [send])
 
+  // Auto-start game when in setup phase with auto-repeat enabled
+  const autoStartedRef = useRef(false)
+  useEffect(() => {
+    // Only auto-start if:
+    // - We're in setup phase
+    // - Connected to WebSocket
+    // - Auto-repeat is enabled (lastConfig exists)
+    // - Haven't already auto-started this game
+    if (
+      state.phase === 'setup' &&
+      isConnected &&
+      state.lastConfig &&
+      state.gameId &&
+      !autoStartedRef.current
+    ) {
+      autoStartedRef.current = true
+      // Small delay to ensure everything is ready
+      setTimeout(() => {
+        send('start_game')
+      }, 500)
+    }
+
+    // Reset auto-start flag when game ends
+    if (state.phase === 'game_over') {
+      autoStartedRef.current = false
+    }
+  }, [state.phase, isConnected, state.lastConfig, state.gameId, send])
+
   const handleSubmitWord = useCallback((word) => {
     send('player_word', { word })
   }, [send])
@@ -56,8 +84,39 @@ function GameApp() {
 
   const handleNewGame = useCallback(() => {
     disconnect()
-    reset()
-  }, [disconnect, reset])
+    fullReset()  // Full reset clears config too
+  }, [disconnect, fullReset])
+
+  const handleContinueGame = useCallback(async () => {
+    if (!state.lastConfig) return
+
+    disconnect()
+    reset()  // Reset preserves lastConfig
+
+    try {
+      const response = await fetch('/api/games', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(state.lastConfig),
+      })
+
+      if (!response.ok) {
+        throw new Error('Error al crear el juego')
+      }
+
+      const data = await response.json()
+      setGame({
+        id: data.game_id,
+        mode: data.mode,
+        players: data.players,
+        debate_duration: state.lastConfig.debate_duration || 60,
+        phase: 'setup',
+      })
+    } catch (err) {
+      console.error('Error continuing game:', err)
+      fullReset()  // On error, go back to setup
+    }
+  }, [disconnect, reset, fullReset, setGame, state.lastConfig])
 
   const renderPhase = () => {
     switch (state.phase) {
@@ -121,7 +180,7 @@ function GameApp() {
           </div>
         )
       case 'game_over':
-        return <GameResult onNewGame={handleNewGame} />
+        return <GameResult onNewGame={handleNewGame} onContinue={handleContinueGame} />
       default:
         return null
     }

@@ -25,6 +25,7 @@ const initialState = {
   leaderboard: [],
   thinkingPlayerId: null,
   connected: false,
+  lastConfig: null, // Store config for game continuation
 }
 
 function gameReducer(state, action) {
@@ -143,8 +144,14 @@ function gameReducer(state, action) {
         leaderboard: action.payload.leaderboard || [],
       }
 
+    case 'SET_CONFIG':
+      return { ...state, lastConfig: action.payload }
+
     case 'RESET':
-      return { ...initialState }
+      return { ...initialState, lastConfig: state.lastConfig } // Preserve config for continuation
+
+    case 'FULL_RESET':
+      return { ...initialState } // Complete reset including config
 
     default:
       return state
@@ -201,6 +208,14 @@ export function GameProvider({ children }) {
     dispatch({ type: 'RESET' })
   }, [])
 
+  const fullReset = useCallback(() => {
+    dispatch({ type: 'FULL_RESET' })
+  }, [])
+
+  const setConfig = useCallback((config) => {
+    dispatch({ type: 'SET_CONFIG', payload: config })
+  }, [])
+
   const setConnected = useCallback((connected) => {
     dispatch({ type: 'SET_CONNECTED', payload: connected })
   }, [])
@@ -210,6 +225,8 @@ export function GameProvider({ children }) {
     setGame,
     handleMessage,
     reset,
+    fullReset,
+    setConfig,
     setConnected,
   }
 
