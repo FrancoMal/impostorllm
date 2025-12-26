@@ -31,11 +31,23 @@ export default function GameResult({ onNewGame, onContinue }) {
   const canContinue = !!state.lastConfig
   const [countdown, setCountdown] = useState(AUTO_CONTINUE_SECONDS)
   const [paused, setPaused] = useState(false)
+  const [exporting, setExporting] = useState(false)
   const countdownRef = useRef(null)
   const hasStartedRef = useRef(false)
 
   const impostor = state.players.find(p => p.id === state.impostorId)
   const innocentsWon = state.winner === 'innocents'
+
+  // Auto-save game to backend (for loop mode)
+  const autoSaveGame = async () => {
+    if (!state.gameId) return
+    try {
+      await fetch(`/api/games/${state.gameId}/autosave`, { method: 'POST' })
+      console.log('[AutoSave] Partida guardada en backend/exports/')
+    } catch (error) {
+      console.error('[AutoSave] Error:', error)
+    }
+  }
 
   // Auto-continue countdown - always runs if canContinue
   useEffect(() => {
@@ -43,7 +55,8 @@ export default function GameResult({ onNewGame, onContinue }) {
 
     if (countdown <= 0 && !hasStartedRef.current) {
       hasStartedRef.current = true
-      onContinue()
+      // Auto-save before continuing in loop mode
+      autoSaveGame().then(() => onContinue())
       return
     }
 
@@ -61,9 +74,45 @@ export default function GameResult({ onNewGame, onContinue }) {
     clearTimeout(countdownRef.current)
   }
 
+  const handleContinue = async () => {
+    // Auto-save before continuing in loop mode
+    await autoSaveGame()
+    onContinue()
+  }
+
   const handleNewGame = () => {
     handlePause()
     onNewGame()
+  }
+
+  const handleExport = async () => {
+    if (!state.gameId || exporting) return
+
+    setExporting(true)
+    handlePause() // Pause countdown while exporting
+
+    try {
+      const response = await fetch(`/api/games/${state.gameId}/export`)
+      if (!response.ok) throw new Error('Export failed')
+
+      const html = await response.text()
+
+      // Create blob and download
+      const blob = new Blob([html], { type: 'text/html' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `partida-${new Date().toISOString().slice(0, 19).replace(/[T:]/g, '-')}.html`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+    } catch (error) {
+      console.error('Error exporting game:', error)
+      alert('Error al exportar la partida')
+    } finally {
+      setExporting(false)
+    }
   }
 
   return (
@@ -177,10 +226,25 @@ export default function GameResult({ onNewGame, onContinue }) {
 
         {/* Game buttons */}
         <div className="space-y-3">
+          {/* Export button */}
+          <button
+            onClick={handleExport}
+            disabled={exporting}
+            className="w-full py-2 bg-purple-600 hover:bg-purple-700 disabled:bg-purple-800 disabled:cursor-wait rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+          >
+            {exporting ? (
+              <>
+                <span className="animate-spin">⏳</span>
+                Exportando...
+              </>
+            ) : (
+              <>📥 Exportar Partida</>
+            )}
+          </button>
           {canContinue && (
             <div className="relative">
               <button
-                onClick={onContinue}
+                onClick={handleContinue}
                 className="w-full py-3 bg-green-600 hover:bg-green-700 rounded-lg font-medium text-lg transition-colors"
               >
                 {!paused && countdown > 0 ? (

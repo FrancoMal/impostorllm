@@ -19,7 +19,7 @@ class OllamaClient:
         model: str,
         prompt: str,
         temperature: float = 0.7,
-        max_tokens: int = 100
+        max_tokens: int = 500
     ) -> str:
         """
         Generate a response from the specified model.
@@ -96,7 +96,7 @@ class OllamaClient:
         model: str,
         messages: list[dict],
         temperature: float = 0.7,
-        max_tokens: int = 100
+        max_tokens: int = 500
     ) -> str:
         """
         Chat completion with message history.

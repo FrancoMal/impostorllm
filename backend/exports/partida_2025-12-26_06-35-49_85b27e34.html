@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Partida Impostor LLM - 2025-12-26 06:35:49</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #e5e7eb;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: rgba(45, 45, 68, 0.8);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
+            text-align: center;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            margin-bottom: 8px;
+        }
+
+        .header .timestamp {
+            color: #9ca3af;
+            font-size: 0.9rem;
+        }
+
+        .header .secret-word {
+            font-size: 1.5rem;
+            color: #fbbf24;
+            margin: 16px 0;
+        }
+
+        .header .impostor-reveal {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(239, 68, 68, 0.2);
+            padding: 8px 16px;
+            border-radius: 20px;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .section {
+            background: rgba(31, 41, 55, 0.6);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .section h2 {
+            font-size: 1.25rem;
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        /* Players */
+        .players-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 12px;
+        }
+
+        .player-card {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: rgba(55, 65, 81, 0.5);
+            padding: 12px;
+            border-radius: 8px;
+        }
+
+        .player-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        .player-info {
+            flex: 1;
+        }
+
+        .player-name {
+            font-weight: 600;
+        }
+
+        .player-model {
+            font-size: 0.75rem;
+            color: #9ca3af;
+        }
+
+        .player-impostor {
+            border: 2px solid #ef4444;
+        }
+
+        /* Words */
+        .words-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .word-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: 20px;
+            background: rgba(55, 65, 81, 0.7);
+            font-size: 0.9rem;
+        }
+
+        .word-badge.impostor {
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid rgba(239, 68, 68, 0.4);
+        }
+
+        /* Debate */
+        .debate-messages {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .debate-message {
+            background: rgba(55, 65, 81, 0.5);
+            border-radius: 8px;
+            padding: 12px;
+            border-left: 3px solid #22c55e;
+        }
+
+        .debate-message.impostor {
+            border-left-color: #ef4444;
+        }
+
+        .message-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .message-number {
+            background: rgba(0,0,0,0.3);
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 0.75rem;
+            color: #9ca3af;
+        }
+
+        .message-role {
+            font-size: 0.7rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        .role-impostor {
+            background: rgba(239, 68, 68, 0.3);
+            color: #fca5a5;
+        }
+
+        .role-innocent {
+            background: rgba(34, 197, 94, 0.3);
+            color: #86efac;
+        }
+
+        .message-content {
+            line-height: 1.5;
+        }
+
+        /* Votes */
+        .votes-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .vote-card {
+            background: rgba(55, 65, 81, 0.5);
+            border-radius: 8px;
+            padding: 12px;
+        }
+
+        .vote-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .vote-arrow {
+            color: #9ca3af;
+        }
+
+        .vote-justification {
+            margin-top: 8px;
+            padding-left: 12px;
+            border-left: 2px solid rgba(255,255,255,0.1);
+            font-style: italic;
+            color: #9ca3af;
+            font-size: 0.9rem;
+        }
+
+        /* Result */
+        .result-banner {
+            text-align: center;
+            padding: 32px;
+            border-radius: 16px;
+            margin-bottom: 20px;
+        }
+
+        .winner-innocents {
+            background: linear-gradient(135deg, rgba(34, 197, 94, 0.2), rgba(22, 163, 74, 0.2));
+            border: 1px solid rgba(34, 197, 94, 0.3);
+        }
+
+        .winner-impostor {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(220, 38, 38, 0.2));
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .result-banner h2 {
+            font-size: 2rem;
+            margin-bottom: 16px;
+            border: none;
+            padding: 0;
+        }
+
+        .result-detail {
+            color: #d1d5db;
+            margin: 8px 0;
+        }
+
+        .impostor-guess {
+            margin-top: 16px;
+            padding: 12px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 8px;
+        }
+
+        .guess-correct {
+            color: #22c55e;
+        }
+
+        .guess-wrong {
+            color: #ef4444;
+        }
+
+        /* Leaderboard */
+        .leaderboard-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .leaderboard-table th,
+        .leaderboard-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .leaderboard-table th {
+            color: #9ca3af;
+            font-weight: 500;
+        }
+
+        .leaderboard-rank {
+            font-size: 1.2rem;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: #6b7280;
+            font-size: 0.8rem;
+        }
+
+        .footer a {
+            color: #60a5fa;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>🎭 Palabra Impostor</h1>
+            <p class="timestamp">2025-12-26 06:35:49</p>
+            <p class="secret-word">Palabra secreta: <strong>gafas</strong></p>
+            <div class="impostor-reveal">
+                <span>Impostor:</span>
+                <span style="color: #FF6B6B; font-weight: bold;">Alfa</span>
+            </div>
+        </div>
+
+        <!-- Result Banner -->
+        <div class="result-banner winner-impostor">
+            <h2>🎭 ¡Impostor Gana!</h2>
+            <p class="result-detail">¡El impostor adivinó la palabra correcta!</p>
+            <div class="impostor-guess">
+                <p>Adivinanza del impostor:</p>
+                <p class="guess-correct" style="font-size: 1.2rem; font-weight: bold;">
+                    "gafas" ✓
+                </p>
+            </div>
+        
+        </div>
+
+        <!-- Players -->
+        <div class="section">
+            <h2>👥 Jugadores</h2>
+            <div class="players-grid">
+            <div class="player-card ">
+                <div class="player-icon" style="background-color: #FFA500">
+                    Ζ
+                </div>
+                <div class="player-info">
+                    <div class="player-name" style="color: #FFA500">Zeta</div>
+                    <div class="player-model">(mistral)</div>
+                </div>
+            </div>
+        
+            <div class="player-card ">
+                <div class="player-icon" style="background-color: #96CEB4">
+                    Δ
+                </div>
+                <div class="player-info">
+                    <div class="player-name" style="color: #96CEB4">Delta</div>
+                    <div class="player-model">(gemma3)</div>
+                </div>
+            </div>
+        
+            <div class="player-card ">
+                <div class="player-icon" style="background-color: #45B7D1">
+                    Γ
+                </div>
+                <div class="player-info">
+                    <div class="player-name" style="color: #45B7D1">Gamma</div>
+                    <div class="player-model">(olmo2)</div>
+                </div>
+            </div>
+        
+            <div class="player-card ">
+                <div class="player-icon" style="background-color: #4ECDC4">
+                    🅱️
+                </div>
+                <div class="player-info">
+                    <div class="player-name" style="color: #4ECDC4">Beta</div>
+                    <div class="player-model">(neural-chat)</div>
+                </div>
+            </div>
+        
+            <div class="player-card ">
+                <div class="player-icon" style="background-color: #DDA0DD">
+                    Ε
+                </div>
+                <div class="player-info">
+                    <div class="player-name" style="color: #DDA0DD">Epsilon</div>
+                    <div class="player-model">(dolphin-mistral)</div>
+                </div>
+            </div>
+        
+            <div class="player-card player-impostor">
+                <div class="player-icon" style="background-color: #FF6B6B">
+                    🅰️
+                </div>
+                <div class="player-info">
+                    <div class="player-name" style="color: #FF6B6B">Alfa</div>
+                    <div class="player-model">(solar)</div>
+                </div>
+            </div>
+        </div>
+        </div>
+
+        <!-- Words -->
+        <div class="section">
+            <h2>💬 Palabras Dichas</h2>
+            <div class="words-list">
+                <div class="word-badge ">
+                    <span style="color: #FFA500; font-weight: 600;">Zeta:</span>
+                    <span>lentes, pupila, mirada</span>
+                </div>
+            
+                <div class="word-badge ">
+                    <span style="color: #96CEB4; font-weight: 600;">Delta:</span>
+                    <span>óptica</span>
+                </div>
+            
+                <div class="word-badge ">
+                    <span style="color: #45B7D1; font-weight: 600;">Gamma:</span>
+                    <span>tapiz, lente, espejo</span>
+                </div>
+            
+                <div class="word-badge ">
+                    <span style="color: #4ECDC4; font-weight: 600;">Beta:</span>
+                    <span>oculares, oculares</span>
+                </div>
+            
+                <div class="word-badge ">
+                    <span style="color: #DDA0DD; font-weight: 600;">Epsilon:</span>
+                    <span>iluminación, cinema, entiendo</span>
+                </div>
+            
+                <div class="word-badge impostor">
+                    <span style="color: #FF6B6B; font-weight: 600;">Alfa:</span>
+                    <span>iluminación, colección, palabra</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Debate -->
+        <div class="section">
+            <h2>🗣️ Debate (20 mensajes)</h2>
+            <div class="debate-messages">
+            <div class="debate-message ">
+                <div class="message-header">
+                    <span class="message-number">#1</span>
+                    <span style="color: #FFA500; font-weight: 600;">Zeta</span>
+                    <span class="message-role role-innocent">Inocente</span>
+                </div>
+                <div class="message-content">Mirada&quot; parece una buena palabra, pero me preocupa que Gamma haya elegido &quot;espejo&quot;, que no parece tener mucha relación directa con la visión o uso de ****. Por otro lado, Epsilon ha dicho &quot;iluminación&quot;, lo cual es un término general que podría aplicarse a muchos lugares y objetos diferentes. Alfa también ha utilizado &quot;palabra&quot;, una palabra muy abstracta que no parece estar relacionada directamente con los ojos, el tema central del juego. Por lo tanto, considero que Gamma podría estar actuando como impostor y merece más investigación.</div>
+            </div>
+        
+            <div class="debate-message ">
+                <div class="message-header">
+                    <span class="message-number">#2</span>
+                    <span style="color: #45B7D1; font-weight: 600;">Gamma</span>
+                    <span class="message-role role-innocent">Inocente</span>
+                </div>
+                <div class="message-content">&quot;Espejo&quot; parece un elección interesante, pero su conexión con las ** es más abstracta. Considerando que el objetivo es relacionar con la visión o uso de ****, &quot;lentes&quot; (#1 Zeta) parece ser la opción más directamente relacionada. 
+
+Defender Gamma: La elección de &quot;espejo&quot; podría interpretarse como un intento de pensar en objetos relacionados con la visión y visualización, una cualidad importante al hablar sobre cómo ver las cosas a través de distintas lentes o perspectivas, incluso si no es literalmente sobre ****. Además, Gamma ha evitado usar cualquier término obvio o directamente relacionado con &quot;****&quot;, lo que sugiere un intento por no revelar la palabra secreta.
+
+Sin embargo, dada la naturaleza muy abstraeta de &quot;espejo&quot; en el contexto de las **, podría ser interpretado como un intento fallido por parte de Gamma de mantenerse inocente sin revelar directamente la palabra secreta. 
+
+Con base en este análisis, creo que Zeta (con &quot;lentes&quot;) tiene una defensa más sólida directamente relacionada con el tema de las ** y podría ser menos sospechoso en este momento del debate. Sin embargo, es importante observar cómo los demás jugadores interactúan y qué argumentos presenten.</div>
+            </div>
+        
+            <div class="debate-message ">
+                <div class="message-header">
+                    <span class="message-number">#3</span>
+                    <span style="color: #DDA0DD; font-weight: 600;">Epsilon</span>
+                    <span class="message-role role-innocent">Inocente</span>
+                </div>
+                <div class="message-content">Entiendo que hay una confusión significativa en las palabras introducidas por los jugadores. Sin embargo, considero que Beta podría estar intentando engañar a todos con su elección de &quot;oculares&quot;, ya que esta palabra no parece encajar con el tema central del debate acerca de las ****. Además, la repetición de esta misma palabra sin ninguna justificación lógica o conexión clara al tema nos lleva a sospechar de su sinceridad en el juego y a cuestionar su verdadera intención.
+
+Al analizar las contribuciones de cada jugador, Beta se destaca por su insistencia en una palabra que no parece encajar ni con el tema central ni con el espíritu del debate. Esta conducta contrasta fuertemente con otros participantes que intentan conectar sus palabras con la visión de **** o, al menos, ofrecen un esfuerzo por hacerlo. En este contexto, Beta parece desviar el debate hacia una dirección alejada de lo esperado, posiblemente buscando ocultar su verdadera intención detrás de esta estrategia verbal.
+
+Por estas razones, considero que Beta podría ser el candidato más probable al papel de impostor en este escenario, donde la falta de coherencia y la elección deliberada de palabras sin fundamento juegan en contra de una interpretación clara y cohesiva del tema. Sin embargo, esto no declara inmediatamente a Beta como impostor; necesitamos evaluar más ampliamente las contribuciones y&quot;</div>
+            </div>
+        
+            <div class="debate-message impostor">
+                <div class="message-header">
+                    <span class="message-number">#4</span>
+                    <span style="color: #FF6B6B; font-weight: 600;">Alfa</span>
+                    <span class="message-role role-impostor">Impostor</span>
+                </div>
+                <div class="message-content">Hmm, no estoy seguro.</div>
+            </div>
+        
+            <div class="debate-message ">
+                <div class="message-header">
+                    <span class="message-number">#5</span>
+                    <span style="color: #FFA500; font-weight: 600;">Zeta</span>
+                    <span class="message-role role-innocent">Inocente</span>
+                </div>
+                <div class="message-content">Mirada&quot; parece una palabra muy interesante, ya que se relaciona con la visión directamente. Aunque Gamma haya elegido &quot;espejo&quot;, no parece estar relacionado de manera clara con los ojos o el tema en general. Por otro lado, Epsilon ha dicho &quot;iluminación&quot; y Alfa &quot;colección&quot;, palabras que se pueden interpretar de manera muy abstracta en este contexto. Considerando esto, creo que mi elección de &quot;mirada&quot; es la más directamente relacionada con el tema de las ** y podría ser menos sospechosa en este momento del debate.</div>
+            </div>
+        
+            <div class="debate-message ">
+                <div class="message-header">
+                    <span class="message-number">#6</span>
+                    <span style="color: #45B7D1; font-weight: 600;">Gamma</span>
+                    <span class="message-role role-innocent">Inocente</span>
+                </div>
+                <div class="message-content">&quot;Espejo&quot; sugiere una mirada que reflexiona o revisa algo, pero su conexión con la visión clara de las ** parece más abstracta. En comparación, &quot;mirada&quot; (#1 Zeta) está directamente relacionada con la idea de observar y percibir a través de los ojos, un concepto fundamental en el uso de ****.
+
+Defender mi posición: La elección de &quot;espejo&quot; podría interpretarse de manera abstracta y menos directamente relacionada con la funcionalidad específica de las **. En contraste, &quot;mirada&quot; implica una visión focalizada y concentrada, lo cual se alinea mejor con el propósito básico de las **** para mejorar la visión clara.
+
+Con base en esta evaluación, creo que Zeta (con &quot;mirada&quot;) posee la opción más sólida relacionada directamente con la función primaria de las **. Esta elección indica un esfuerzo por mantenerse dentro del marco del debate sin revelar directamente la palabra secreta, lo cual sugiere una consideración estratégica en el intento de preservar la inocencia en este juego de palabras. Aunque Alfa y Epsilon han presentado argumentos más abstractos, esencialmente centrados en iluminación o colección general, Zeta se destaca por su elección directamente relacionada con la visión.
+
+Es importante observar cómo las demás interacciones dentro del debate refuerzan o desafían esta evaluación. La falta de una contribución clara y directa por parte de Alfa podría ser indicativa de un intento por mantenerse en el umbral de lo desconocido, mientras que la indagación de Epsilon sobre la conexión entre las palabras y el tema general ayuda a clarificar el escenario. 
+
+En suma, basándome en la relación directa entre &quot;mirada&quot; y la visión mejorada proporcionada por las ****, considero Zeta (con &quot;mirada&quot;) la opción menos sospechosa en este debate actual. Sin embargo, siempre es crucial analizar el contexto completo y los intercambios completos para llegar a una conclusión definitiva.</div>
+            </div>
+        
+            <div class="debate-message ">
+                <div class="message-header">
+                    <span class="message-number">#7</span>
+                    <span style="color: #DDA0DD; font-weight: 600;">Epsilon</span>
+                    <span class="message-role role-innocent">Inocente</span>
+                </div>
+                <div class="message-content">Entiendo que hay una confusión significativa en las palabras introducidas por los jugadores. Sin embargo, considero que Beta podría estar intentando engañar a todos con su elección de &quot;oculares&quot;, ya que esta palabra no parece encajar con el tema central del debate acerca de las ****. Además, la repetición de esta misma palabra sin ninguna justificación lógica o conexión clara al tema nos lleva a sospechar de su sinceridad en el juego y a cuestionar su verdadera intención.
+
+Al analizar las contribuciones de cada jugador, Beta se destaca por su insistencia en una palabra que no parece encajar ni con el tema central ni con el espíritu del debate. Esta conducta contrasta fuertemente con otros participantes que intentan conectar sus palabras con la visión de **** o, al menos, ofrecen un esfuerzo por hacerlo. En este contexto, Beta parece desviar el debate hacia una dirección alejada de lo esperado, posiblemente buscando ocultar su verdadera intención detrás de esta estrategia verbal.
+
+Por estas razones, considero que Beta podría ser el candidato más probable al papel de impostor en este escenario, donde la falta de coherencia y la elección deliberada de palabras sin fundamento juegan en contra de una interpretación clara y cohesiva del tema. Sin embargo, esto no declara inmediatamente a Beta como impostor; necesitamos evaluar más ampliamente las contribuciones y&quot;</div>
+            </div>
+        
+            <div class="debate-message impostor">
+                <div class="message-header">
+                    <span class="message-number">#8</span>
+                    <span style="color: #FF6B6B; font-weight: 600;">Alfa</span>
+                    <span class="message-role role-impostor">Impostor</span>
+                </div>
+                <div class="message-content">Hmm, no estoy seguro.</div>
+            </div>
+        
+            <div class="debate-message ">
+                <div class="message-header">
+                    <span class="message-number">#9</span>
+                    <span style="color: #FFA500; font-weight: 600;">Zeta</span>
+                    <span class="message-role role-innocent">Inocente</span>
+                </div>
+                <div class="message-content">Mirada&quot; se refiere directamente a la capacidad de observar y percibir a través de los ojos, lo cual es un aspecto clave en el tema de las **. Al mismo tiempo, es una palabra que no revela la palabra secreta directamente. Por otro lado, &quot;espejo&quot; (Gamma) puede interpretarse como algo que refleja o revisa algo, pero su conexión con los ojos y el tema de las ** parece más abstracta. La repetición sin justificación lógica de &quot;oculares&quot; por parte de Beta ha sido una estrategia sospechosa durante todo el juego hasta ahora.</div>
+            </div>
+        
+            <div class="debate-message ">
+                <div class="message-header">
+                    <span class="message-number">#10</span>
+                    <span style="color: #45B7D1; font-weight: 600;">Gamma</span>
+                    <span class="message-role role-innocent">Inocente</span>
+                </div>
+                <div class="message-content">&quot;Mirada&quot; se enfoca directamente en la habilidad visual central que ofrecen las **, una elección clara y relacionada con el uso práctico diario. Sin embargo, la palabra &quot;espejo&quot; (Gamma) introduce un grado de abstracto, sugiriendo una reflexión o revisión más amplia, aunque menos directamente relacionada con la funcionalidad específica de mejorar la visión. La elección por parte de Gamma, sin embargo, no revela suficientemente el objeto o concepto central que estamos debatiendo.
+
+Al observar las contribuciones del equipo, es crucial reconocer que Beta ha repetido &quot;oculares&quot; de manera cuestionable, sin proporcionar contexto ni justificación que vincule esta palabra con **. Este comportamiento deja en claro que su intención podría ser distraer o ocultar el verdadero tema del debate.
+
+Por lo tanto, dada la falta de conexión directa y la repetición cuestionable de &quot;oculares&quot; por parte de Beta, considero que es ella quien se encuentra bajo el escrutinio debido a su estrategia no clara y desviadora en este juego de palabras. La ausencia de una contribución significativa y coherente con el tema central, en conjunto con la elección peculiares de palabras por parte de Beta, mantiene mi posición firme: **Beta** podría ser el candidato al impostor en este debate, basada en su PERFORMANCE laboriosa para desviar el foco del debate.</div>
+            </div>
+        
+            <div class="debate-message ">
+                <div class="message-header">
+                    <span class="message-number">#11</span>
+                    <span style="color: #DDA0DD; font-weight: 600;">Epsilon</span>
+                    <span class="message-role role-innocent">Inocente</span>
+                </div>
+                <div class="message-content">Entiendo que hay una confusión significativa en las palabras introducidas por los jugadores. Sin embargo, considero que Beta podría estar intentando engañar a todos con su elección de &quot;oculares&quot;, ya que esta palabra no parece encajar con el tema central del debate acerca de las ****. Además, la repetición de esta misma palabra sin ninguna justificación lógica o conexión clara al tema nos lleva a sospechar de su sinceridad en el juego y a cuestionar su verdadera intención.
+
+Al analizar las contribuciones de cada jugador, Beta se destaca por su insistencia en una palabra que no parece encajar ni con el tema central ni con el espíritu del debate. Esta conducta contrasta fuertemente con otros participantes que intentan conectar sus palabras con la visión de **** o, al menos, ofrecen un esfuerzo por hacerlo. En este contexto, Beta parece desviar el debate hacia una dirección alejada de lo esperado, posiblemente buscando ocultar su verdadera intención detrás de esta estrategia verbal.
+
+Por estas razones, considero que Beta podría ser el candidato más probable al papel de impostor en este escenario, donde la falta de coherencia y la elección deliberada de palabras sin fundamento juegan en contra de una interpretación clara y cohesiva del tema. Sin embargo, esto no declara inmediatamente a Beta como impostor; necesitamos evaluar más ampliamente las contribuciones y&quot;</div>
+            </div>
+        
+            <div class="debate-message impostor">
+                <div class="message-header">
+                    <span class="message-number">#12</span>
+                    <span style="color: #FF6B6B; font-weight: 600;">Alfa</span>
+                    <span class="message-role role-impostor">Impostor</span>
+                </div>
+                <div class="message-content">Hmm, no estoy seguro.</div>
+            </div>
+        
+            <div class="debate-message ">
+                <div class="message-header">
+                    <span class="message-number">#13</span>
+                    <span style="color: #FFA500; font-weight: 600;">Zeta</span>
+                    <span class="message-role role-innocent">Inocente</span>
+                </div>
+                <div class="message-content">Mirada&quot; se refiere directamente a la capacidad de observar y percibir a través de los ojos, lo cual es un aspecto clave en el tema de las **. Al mismo tiempo, es una palabra que no revela la palabra secreta directamente. Por otro lado, &quot;espejo&quot; (Gamma) puede interpretarse como algo que refleja o revisa algo, pero su conexión con los ojos y el tema de las ** parece más abstracta. La repetición sin justificación lógica de &quot;oculares&quot; por parte de Beta ha sido una estrategia sospechosa durante todo el juego hasta ahora.</div>
+            </div>
+        
+            <div class="debate-message ">
+                <div class="message-header">
+                    <span class="message-number">#14</span>
+                    <span style="color: #45B7D1; font-weight: 600;">Gamma</span>
+                    <span class="message-role role-innocent">Inocente</span>
+                </div>
+                <div class="message-content">Mirada&quot;, como expresado por Zeta, se enfoca directamente en el aspecto visual fundamental que las **offren**, conectándose claramente con nuestro sentido de visión. Sin embargo, la elección de &quot;espejo&quot; por parte de Gamma introduce una dimensión más abstracta, quizás no tan centrada en la funcionalidad específica de las ****.
+
+Entendiendo que Beta ha insistido en &quot;oculares&quot;, una palabra que carece de una conexión evidente con **, su repeticion sin contexto podría sugerir un intento de desviar el debate. Esta estrategia deja dudas sobre su intención real en comparación con las contribuciones más directas y coherentes de los demás participantes.
+
+Dada esta situación, me pregunto si Beta realmente comprensiona completamente el tema discutido o si está tratando de ocultar algo detrás de su repetición inadecuada. La ausencia de conexión clara entre &quot;oculares&quot; y ** nos obliga a cuestionar la pertinencia de su contribución.
+
+Por lo tanto, considero que Beta podría estar intentando engañar al resto del equipo a través de una estrategia de confusión y desviación. La necesidad de claridad y relevancia en nuestro diálogo sobre **demuestra** la importancia de las palabras que escuchamos y cómo pueden influir en el entendimiento compartido.</div>
+            </div>
+        
+            <div class="debate-message ">
+                <div class="message-header">
+                    <span class="message-number">#15</span>
+                    <span style="color: #DDA0DD; font-weight: 600;">Epsilon</span>
+                    <span class="message-role role-innocent">Inocente</span>
+                </div>
+                <div class="message-content">Entiendo que hay una confusión significativa en las palabras introducidas por los jugadores. Sin embargo, considero que Beta podría estar intentando engañar a todos con su elección de &quot;oculares&quot;, ya que esta palabra no parece encajar con el tema central del debate acerca de las ****. Además, la repetición de esta misma palabra sin ninguna justificación lógica o conexión clara al tema nos lleva a sospechar de su sinceridad en el juego y a cuestionar su verdadera intención.
+
+Al analizar las contribuciones de cada jugador, Beta se destaca por su insistencia en una palabra que no parece encajar ni con el tema central ni con el espíritu del debate. Esta conducta contrasta fuertemente con otros participantes que intentan conectar sus palabras con la visión de **** o, al menos, ofrecen un esfuerzo por hacerlo. En este contexto, Beta parece desviar el debate hacia una dirección alejada de lo esperado, posiblemente buscando ocultar su verdadera intención detrás de esta estrategia verbal.
+
+Por estas razones, considero que Beta podría ser el candidato más probable al papel de impostor en este escenario, donde la falta de coherencia y la elección deliberada de palabras sin fundamento juegan en contra de una interpretación clara y cohesiva del tema. Sin embargo, esto no declara inmediatamente a Beta como impostor; necesitamos evaluar más ampliamente las contribuciones y&quot;</div>
+            </div>
+        
+            <div class="debate-message impostor">
+                <div class="message-header">
+                    <span class="message-number">#16</span>
+                    <span style="color: #FF6B6B; font-weight: 600;">Alfa</span>
+                    <span class="message-role role-impostor">Impostor</span>
+                </div>
+                <div class="message-content">Hmm, no estoy seguro.</div>
+            </div>
+        
+            <div class="debate-message ">
+                <div class="message-header">
+                    <span class="message-number">#17</span>
+                    <span style="color: #FFA500; font-weight: 600;">Zeta</span>
+                    <span class="message-role role-innocent">Inocente</span>
+                </div>
+                <div class="message-content">Mirada&quot; se refiere directamente a la capacidad de observar y percibir a través de los ojos, lo cual es un aspecto clave en el tema de las **. Al mismo tiempo, es una palabra que no revela la palabra secreta directamente. Por otro lado, &quot;espejo&quot; (Gamma) puede interpretarse como algo que refleja o revisa algo, pero su conexión con los ojos y el tema de las ** parece más abstracta. La repetición sin justificación lógica de &quot;oculares&quot; por parte de Beta ha sido una estrategia sospechosa durante todo el juego hasta ahora.</div>
+            </div>
+        
+            <div class="debate-message ">
+                <div class="message-header">
+                    <span class="message-number">#18</span>
+                    <span style="color: #45B7D1; font-weight: 600;">Gamma</span>
+                    <span class="message-role role-innocent">Inocente</span>
+                </div>
+                <div class="message-content">Mirada,&quot; expresada por Zeta, se enfoca directamente en nuestro sentido visual, una idea central en el tema de las **. Sin embargo, la elección de &quot;espejo&quot; por parte de Gamma introduce una dimensión más abstracta, quizás no tan directamente relacionada con el propósito funcional de las ****.
+
+Beta, al insistir en &quot;oculares&quot;, una palabra que carece de conexión clara con **, sugiere un intento de desviar el debate. Esta estrategia plantea dudas sobre su comprensión del tema y su sinceridad en el diálogo.
+
+Dada esta situación, me pregunto si Beta realmente está tratando de confundir al equipo con su repetición incoherente. La ausencia de claridad en su contribución nos obliga a cuestionar la relevancia de sus palabras frente a las demás contribuciones más relevantes.
+
+Entonces, considero que Beta podría estar intentando engañar al resto del equipo con su estrategia de confusión. Su discurso parece más una intenta de ocultar su verdadera intención detrás de la falta de coherencia en el tema discutido.</div>
+            </div>
+        
+            <div class="debate-message ">
+                <div class="message-header">
+                    <span class="message-number">#19</span>
+                    <span style="color: #DDA0DD; font-weight: 600;">Epsilon</span>
+                    <span class="message-role role-innocent">Inocente</span>
+                </div>
+                <div class="message-content">Entiendo que hay una confusión significativa en las palabras introducidas por los jugadores. Sin embargo, considero que Beta podría estar intentando engañar a todos con su elección de &quot;oculares&quot;, ya que esta palabra no parece encajar con el tema central del debate acerca de las ****. Además, la repetición de esta misma palabra sin ninguna justificación lógica o conexión clara al tema nos lleva a sospechar de su sinceridad en el juego y a cuestionar su verdadera intención.
+
+Al analizar las contribuciones de cada jugador, Beta se destaca por su insistencia en una palabra que no parece encajar ni con el tema central ni con el espíritu del debate. Esta conducta contrasta fuertemente con otros participantes que intentan conectar sus palabras con la visión de **** o, al menos, ofrecen un esfuerzo por hacerlo. En este contexto, Beta parece desviar el debate hacia una dirección alejada de lo esperado, posiblemente buscando ocultar su verdadera intención detrás de esta estrategia verbal.
+
+Por estas razones, considero que Beta podría ser el candidato más probable al papel de impostor en este escenario, donde la falta de coherencia y la elección deliberada de palabras sin fundamento juegan en contra de una interpretación clara y cohesiva del tema. Sin embargo, esto no declara inmediatamente a Beta como impostor; necesitamos evaluar más ampliamente las contribuciones y&quot;</div>
+            </div>
+        
+            <div class="debate-message impostor">
+                <div class="message-header">
+                    <span class="message-number">#20</span>
+                    <span style="color: #FF6B6B; font-weight: 600;">Alfa</span>
+                    <span class="message-role role-impostor">Impostor</span>
+                </div>
+                <div class="message-content">Hmm, no estoy seguro.</div>
+            </div>
+        </div>
+        </div>
+
+        <!-- Votes -->
+        <div class="section">
+            <h2>🗳️ Votación</h2>
+            <div class="votes-list">
+            <div class="vote-card">
+                <div class="vote-header">
+                    <span style="color: #FFA500; font-weight: 600;">Zeta</span>
+                    <span class="vote-arrow">→</span>
+                    <span style="color: #FF6B6B; font-weight: 600;">Alfa</span>
+                </div>
+                <div class="vote-justification">"Ha demostrado una estrategia confusa, repetiendo &quot;oculares&quot; sin justificación lógica o conexión clara al tema. Esta conducta contrasta fuertemente con otros jugadores que ofrecen un esfuerzo por hacerlo en el debate. Además, su repetición plantea dudas sobre su comprensión del tema y su sinceridad en el juego."</div>
+            </div>
+        
+            <div class="vote-card">
+                <div class="vote-header">
+                    <span style="color: #45B7D1; font-weight: 600;">Gamma</span>
+                    <span class="vote-arrow">→</span>
+                    <span style="color: #FF6B6B; font-weight: 600;">Alfa</span>
+                </div>
+                <div class="vote-justification">"Beta insistió en la palabra &quot;oculares&quot; que no conectaba con el tema de las **. Su repetición sin justificación lógica parece un intento de confundir al equipo. Además, su discurso fue desviador y evasivo frente a preguntas directas sobre la relevancia de sus palabras. Sus acciones en el debate son consistentes con alguien que podría estar tratan de engañar al resto del equipo."</div>
+            </div>
+        
+            <div class="vote-card">
+                <div class="vote-header">
+                    <span style="color: #DDA0DD; font-weight: 600;">Epsilon</span>
+                    <span class="vote-arrow">→</span>
+                    <span style="color: #FF6B6B; font-weight: 600;">Alfa</span>
+                </div>
+                
+            </div>
+        
+            <div class="vote-card">
+                <div class="vote-header">
+                    <span style="color: #FF6B6B; font-weight: 600;">Alfa</span>
+                    <span class="vote-arrow">→</span>
+                    <span style="color: #DDA0DD; font-weight: 600;">Epsilon</span>
+                </div>
+                <div class="vote-justification">"No pude decidir claramente."</div>
+            </div>
+        </div>
+        </div>
+
+        
+        <div class="section">
+            <h2>🏆 Puntuaciones</h2>
+            <table class="leaderboard-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Modelo</th>
+                        <th>Victorias</th>
+                        <th>Partidas</th>
+                        <th>% Victoria</th>
+                    </tr>
+                </thead>
+                <tbody>
+    
+            <tr>
+                <td class="leaderboard-rank">🥇</td>
+                <td>solar:10.7b</td>
+                <td>0</td>
+                <td>0</td>
+                <td>0.0%</td>
+            </tr>
+        
+            <tr>
+                <td class="leaderboard-rank">🥈</td>
+                <td>gemma3:12b</td>
+                <td>0</td>
+                <td>0</td>
+                <td>0.0%</td>
+            </tr>
+        
+            <tr>
+                <td class="leaderboard-rank">🥉</td>
+                <td>gemma3:4b</td>
+                <td>0</td>
+                <td>0</td>
+                <td>0.0%</td>
+            </tr>
+        
+            <tr>
+                <td class="leaderboard-rank">4</td>
+                <td>qwen3:8b</td>
+                <td>0</td>
+                <td>0</td>
+                <td>0.0%</td>
+            </tr>
+        
+            <tr>
+                <td class="leaderboard-rank">5</td>
+                <td>llama3.2:3b-instruct-q4_0</td>
+                <td>0</td>
+                <td>0</td>
+                <td>0.0%</td>
+            </tr>
+        
+            <tr>
+                <td class="leaderboard-rank">6</td>
+                <td>olmo2:7b</td>
+                <td>0</td>
+                <td>0</td>
+                <td>0.0%</td>
+            </tr>
+        
+            <tr>
+                <td class="leaderboard-rank">7</td>
+                <td>mistral:7b</td>
+                <td>0</td>
+                <td>0</td>
+                <td>0.0%</td>
+            </tr>
+        
+            <tr>
+                <td class="leaderboard-rank">8</td>
+                <td>dolphin-mistral:7b</td>
+                <td>0</td>
+                <td>0</td>
+                <td>0.0%</td>
+            </tr>
+        
+            <tr>
+                <td class="leaderboard-rank">9</td>
+                <td>neural-chat:7b</td>
+                <td>0</td>
+                <td>0</td>
+                <td>0.0%</td>
+            </tr>
+        
+                </tbody>
+            </table>
+        </div>
+    
+
+        <!-- Footer -->
+        <div class="footer">
+            <p>Generado por <a href="https://github.com/your-repo/impostor-llm">Impostor LLM</a></p>
+        </div>
+    </div>
+</body>
+</html>

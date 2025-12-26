@@ -7,16 +7,21 @@ import json
 from typing import Optional
 from contextlib import asynccontextmanager
 
+import os
+from pathlib import Path
+
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 
 from models.schemas import GameConfig, GameMode, WSMessageType
 from game.state import game_manager
-# Use logic2 for chat-based context (persistent memory per player)
-# To use the old system, change to: from game.logic import GameController
-from game.logic2 import GameController2 as GameController
+# Game controller options:
+# - logic.py: Sistema original (stateless, reconstruye contexto cada vez)
+# - logic2.py: Sistema nuevo (chat persistente por jugador)
+from game.logic import GameController
+from game.export import generate_game_html
 from llm.ollama_client import call_llm, ollama_client
 from llm.players import LLM_PLAYERS, DEFAULT_PLAYERS
 
@@ -182,6 +187,59 @@ async def get_game(game_id: str):
 async def get_leaderboard():
     """Get the leaderboard."""
     return game_manager.get_leaderboard()
+
+
+@app.get("/api/games/{game_id}/export", response_class=HTMLResponse)
+async def export_game(game_id: str):
+    """Export a game as an HTML report."""
+    game = game_manager.get_game(game_id)
+    if not game:
+        raise HTTPException(status_code=404, detail="Game not found")
+
+    # Get leaderboard for the report
+    leaderboard = game_manager.get_leaderboard()
+
+    # Generate HTML
+    html = generate_game_html(game, leaderboard)
+
+    return HTMLResponse(content=html)
+
+
+# Directory for auto-saved exports
+EXPORTS_DIR = Path(__file__).parent / "exports"
+
+
+@app.post("/api/games/{game_id}/autosave")
+async def autosave_game(game_id: str):
+    """Auto-save a game as HTML to local exports folder (for loop mode)."""
+    game = game_manager.get_game(game_id)
+    if not game:
+        raise HTTPException(status_code=404, detail="Game not found")
+
+    # Create exports directory if not exists
+    EXPORTS_DIR.mkdir(exist_ok=True)
+
+    # Get leaderboard for the report
+    leaderboard = game_manager.get_leaderboard()
+
+    # Generate HTML
+    html = generate_game_html(game, leaderboard)
+
+    # Generate filename with timestamp
+    from datetime import datetime
+    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    filename = f"partida_{timestamp}_{game_id[:8]}.html"
+    filepath = EXPORTS_DIR / filename
+
+    # Save to file
+    with open(filepath, "w", encoding="utf-8") as f:
+        f.write(html)
+
+    return JSONResponse(content={
+        "success": True,
+        "filename": filename,
+        "path": str(filepath)
+    })
 
 
 # WebSocket endpoint

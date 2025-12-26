@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Partida Impostor LLM - 2025-12-26 06:13:26</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #e5e7eb;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: rgba(45, 45, 68, 0.8);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
+            text-align: center;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            margin-bottom: 8px;
+        }
+
+        .header .timestamp {
+            color: #9ca3af;
+            font-size: 0.9rem;
+        }
+
+        .header .secret-word {
+            font-size: 1.5rem;
+            color: #fbbf24;
+            margin: 16px 0;
+        }
+
+        .header .impostor-reveal {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(239, 68, 68, 0.2);
+            padding: 8px 16px;
+            border-radius: 20px;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .section {
+            background: rgba(31, 41, 55, 0.6);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .section h2 {
+            font-size: 1.25rem;
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        /* Players */
+        .players-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 12px;
+        }
+
+        .player-card {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: rgba(55, 65, 81, 0.5);
+            padding: 12px;
+            border-radius: 8px;
+        }
+
+        .player-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        .player-info {
+            flex: 1;
+        }
+
+        .player-name {
+            font-weight: 600;
+        }
+
+        .player-model {
+            font-size: 0.75rem;
+            color: #9ca3af;
+        }
+
+        .player-impostor {
+            border: 2px solid #ef4444;
+        }
+
+        /* Words */
+        .words-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .word-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: 20px;
+            background: rgba(55, 65, 81, 0.7);
+            font-size: 0.9rem;
+        }
+
+        .word-badge.impostor {
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid rgba(239, 68, 68, 0.4);
+        }
+
+        /* Debate */
+        .debate-messages {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .debate-message {
+            background: rgba(55, 65, 81, 0.5);
+            border-radius: 8px;
+            padding: 12px;
+            border-left: 3px solid #22c55e;
+        }
+
+        .debate-message.impostor {
+            border-left-color: #ef4444;
+        }
+
+        .message-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .message-number {
+            background: rgba(0,0,0,0.3);
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 0.75rem;
+            color: #9ca3af;
+        }
+
+        .message-role {
+            font-size: 0.7rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        .role-impostor {
+            background: rgba(239, 68, 68, 0.3);
+            color: #fca5a5;
+        }
+
+        .role-innocent {
+            background: rgba(34, 197, 94, 0.3);
+            color: #86efac;
+        }
+
+        .message-content {
+            line-height: 1.5;
+        }
+
+        /* Votes */
+        .votes-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .vote-card {
+            background: rgba(55, 65, 81, 0.5);
+            border-radius: 8px;
+            padding: 12px;
+        }
+
+        .vote-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .vote-arrow {
+            color: #9ca3af;
+        }
+
+        .vote-justification {
+            margin-top: 8px;
+            padding-left: 12px;
+            border-left: 2px solid rgba(255,255,255,0.1);
+            font-style: italic;
+            color: #9ca3af;
+            font-size: 0.9rem;
+        }
+
+        /* Result */
+        .result-banner {
+            text-align: center;
+            padding: 32px;
+            border-radius: 16px;
+            margin-bottom: 20px;
+        }
+
+        .winner-innocents {
+            background: linear-gradient(135deg, rgba(34, 197, 94, 0.2), rgba(22, 163, 74, 0.2));
+            border: 1px solid rgba(34, 197, 94, 0.3);
+        }
+
+        .winner-impostor {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(220, 38, 38, 0.2));
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .result-banner h2 {
+            font-size: 2rem;
+            margin-bottom: 16px;
+            border: none;
+            padding: 0;
+        }
+
+        .result-detail {
+            color: #d1d5db;
+            margin: 8px 0;
+        }
+
+        .impostor-guess {
+            margin-top: 16px;
+            padding: 12px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 8px;
+        }
+
+        .guess-correct {
+            color: #22c55e;
+        }
+
+        .guess-wrong {
+            color: #ef4444;
+        }
+
+        /* Leaderboard */
+        .leaderboard-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .leaderboard-table th,
+        .leaderboard-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .leaderboard-table th {
+            color: #9ca3af;
+            font-weight: 500;
+        }
+
+        .leaderboard-rank {
+            font-size: 1.2rem;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: #6b7280;
+            font-size: 0.8rem;
+        }
+
+        .footer a {
+            color: #60a5fa;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>🎭 Palabra Impostor</h1>
+            <p class="timestamp">2025-12-26 06:13:26</p>
+            <p class="secret-word">Palabra secreta: <strong>pollo</strong></p>
+            <div class="impostor-reveal">
+                <span>Impostor:</span>
+                <span style="color: #96CEB4; font-weight: bold;">Delta</span>
+            </div>
+        </div>
+
+        <!-- Result Banner -->
+        <div class="result-banner winner-impostor">
+            <h2>🎭 ¡Impostor Gana!</h2>
+            <p class="result-detail">El impostor no fue descubierto.</p>
+        </div>
+
+        <!-- Players -->
+        <div class="section">
+            <h2>👥 Jugadores</h2>
+            <div class="players-grid">
+            <div class="player-card ">
+                <div class="player-icon" style="background-color: #4ECDC4">
+                    🅱️
+                </div>
+                <div class="player-info">
+                    <div class="player-name" style="color: #4ECDC4">Beta</div>
+                    <div class="player-model">(neural-chat)</div>
+                </div>
+            </div>
+        
+            <div class="player-card ">
+                <div class="player-icon" style="background-color: #FFA500">
+                    Ζ
+                </div>
+                <div class="player-info">
+                    <div class="player-name" style="color: #FFA500">Zeta</div>
+                    <div class="player-model">(mistral)</div>
+                </div>
+            </div>
+        
+            <div class="player-card player-impostor">
+                <div class="player-icon" style="background-color: #96CEB4">
+                    Δ
+                </div>
+                <div class="player-info">
+                    <div class="player-name" style="color: #96CEB4">Delta</div>
+                    <div class="player-model">(gemma3)</div>
+                </div>
+            </div>
+        
+            <div class="player-card ">
+                <div class="player-icon" style="background-color: #DDA0DD">
+                    Ε
+                </div>
+                <div class="player-info">
+                    <div class="player-name" style="color: #DDA0DD">Epsilon</div>
+                    <div class="player-model">(dolphin-mistral)</div>
+                </div>
+            </div>
+        
+            <div class="player-card ">
+                <div class="player-icon" style="background-color: #45B7D1">
+                    Γ
+                </div>
+                <div class="player-info">
+                    <div class="player-name" style="color: #45B7D1">Gamma</div>
+                    <div class="player-model">(olmo2)</div>
+                </div>
+            </div>
+        
+            <div class="player-card ">
+                <div class="player-icon" style="background-color: #FF6B6B">
+                    🅰️
+                </div>
+                <div class="player-info">
+                    <div class="player-name" style="color: #FF6B6B">Alfa</div>
+                    <div class="player-model">(solar)</div>
+                </div>
+            </div>
+        </div>
+        </div>
+
+        <!-- Words -->
+        <div class="section">
+            <h2>💬 Palabras Dichas</h2>
+            <div class="words-list">
+                <div class="word-badge ">
+                    <span style="color: #4ECDC4; font-weight: 600;">Beta:</span>
+                    <span>pollos, fiesta</span>
+                </div>
+            
+                <div class="word-badge ">
+                    <span style="color: #FFA500; font-weight: 600;">Zeta:</span>
+                    <span>feria, mercado, mercado, cocina</span>
+                </div>
+            
+                <div class="word-badge impostor">
+                    <span style="color: #96CEB4; font-weight: 600;">Delta:</span>
+                    <span>circo, tienda, carnicería, huerto</span>
+                </div>
+            
+                <div class="word-badge ">
+                    <span style="color: #DDA0DD; font-weight: 600;">Epsilon:</span>
+                    <span>pastel, zapateria, festival</span>
+                </div>
+            
+                <div class="word-badge ">
+                    <span style="color: #45B7D1; font-weight: 600;">Gamma:</span>
+                    <span>perejil, cerote, pecho, polloadería</span>
+                </div>
+            
+                <div class="word-badge ">
+                    <span style="color: #FF6B6B; font-weight: 600;">Alfa:</span>
+                    <span>fiesta</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Debate -->
+        <div class="section">
+            <h2>🗣️ Debate (15 mensajes)</h2>
+            <div class="debate-messages">
+            <div class="debate-message ">
+                <div class="message-header">
+                    <span class="message-number">#1</span>
+                    <span style="color: #FFA500; font-weight: 600;">Zeta</span>
+                    <span class="message-role role-innocent">Inocente</span>
+                </div>
+                <div class="message-content">Considerando la ausencia de relación clara entre las palabras de Delta, específicamente &#39;carnicería&#39; y &#39;huerto&#39;, podría sugerirse un intento indirecto para engañar al resto de los jugadores. Mientras que estas palabras pueden tener una ligera conexión simbólica con la preparación y consumo de carne, como elementos centrales de celebraciones, su falta de especificidad hace que parezcan desconectadas del tema en general. Por otro lado, mi elección &#39;cocina&#39; se relaciona ligeramente con la palabra secreta a través de la preparación y cocción de alimentos.</div>
+            </div>
+        
+            <div class="debate-message impostor">
+                <div class="message-header">
+                    <span class="message-number">#2</span>
+                    <span style="color: #96CEB4; font-weight: 600;">Delta</span>
+                    <span class="message-role role-impostor">Impostor</span>
+                </div>
+                <div class="message-content">Hmm, no estoy seguro.</div>
+            </div>
+        
+            <div class="debate-message ">
+                <div class="message-header">
+                    <span class="message-number">#3</span>
+                    <span style="color: #45B7D1; font-weight: 600;">Gamma</span>
+                    <span class="message-role role-innocent">Inocente</span>
+                </div>
+                <div class="message-content">Defiendo mi palabra &quot;****adería&quot; porque esta relación indirecta con la palabra secreta, &quot;****&quot;, se basa en el concepto de carga o cargamento que puede implicar la preparación o transporte de carne, una idea central alrededor del tema de carne y carnecería. Aunque no podemos decir &quot;****&quot; directamente ni referirnos explícitamente a ella, &quot;****adería&quot; se ajusta ligeramente al contexto evitando infravalorar las reglas del juego.
+
+Ahora, investigaré por el impostor considerando que la palabra de Zeta, &quot;feria&quot;, no parece tener una conexión directa con carne o carnecería. Las ferias son generalmente asociadas con una amplia gama de productos y actividades, pero menos específicamente con los aspectos de la caza y consumo de carne que estaban en el centro del debate.
+
+Por otro lado, la opción de Delta &quot;carnicería&quot; parece más cercana a la temática, aunque aún no es suficientemente directa. La carnicería se enfoca en la preparación y venta de carne, lo cual está más cerca al tema central que las demás opciones.
+
+Dado que estamos buscando una palabra que pueda desviarse o ser descartada por su falta de conexión con el tema &quot;****&quot;, la opción de Zeta parece menos convincente en este contexto. Esta elección podría interpretarse como un intento de distraer o engañar al resto del equipo al no establecer una conexión clara con la palabra secreta.
+
+Por lo tanto, considero que Zeta es el candidato más probable para ser acusado por haber dado una respuesta descartablemente desconectada de la temática central. La elección de &quot;feria&quot; carece de la suficiente ligereza necesaria para vincularla directamente con la cuestión de carne y carnecería, lo cual sugiere un posible intento de ocultar la falta de conexión con &quot;****&quot;. 
+
+VOTO: Zeta
+RAZON: La palabra &quot;feria&quot; de Zeta carece de una relación clara con el tema central de carne y carnecería. Las ferias son eventos generalizados que no se centran específicamente en la caza o consumo de carne, lo cual hace que esta elección sea poco convincente en</div>
+            </div>
+        
+            <div class="debate-message ">
+                <div class="message-header">
+                    <span class="message-number">#4</span>
+                    <span style="color: #FFA500; font-weight: 600;">Zeta</span>
+                    <span class="message-role role-innocent">Inocente</span>
+                </div>
+                <div class="message-content">Considerando la ausencia de claridad en las palabras seleccionadas por Delta, específicamente &#39;huerto&#39; y &#39;****adería&#39;, podría sugerirse un intento indirecto para engañar al resto de los jugadores. Mientras que estas palabras pueden tener una ligera conexión simbólica con la caza o preparación de carne, como elementos centrales de celebraciones, su falta de especificidad hace que parezcan desconectadas del tema en general. Por otro lado, mi elección &#39;cocina&#39; se relaciona ligeramente con la palabra secreta a través de la preparación y cocción de alimentos.</div>
+            </div>
+        
+            <div class="debate-message impostor">
+                <div class="message-header">
+                    <span class="message-number">#5</span>
+                    <span style="color: #96CEB4; font-weight: 600;">Delta</span>
+                    <span class="message-role role-impostor">Impostor</span>
+                </div>
+                <div class="message-content">Hmm, no estoy seguro.</div>
+            </div>
+        
+            <div class="debate-message ">
+                <div class="message-header">
+                    <span class="message-number">#6</span>
+                    <span style="color: #45B7D1; font-weight: 600;">Gamma</span>
+                    <span class="message-role role-innocent">Inocente</span>
+                </div>
+                <div class="message-content">Defiendo mi palabra &quot;****adería&quot; porque esta relación indirecta con la palabra secreta, &quot;****&quot;, se basa en el concepto de carga o cargamento que puede implicar la preparación o transporte de carne, una idea central alrededor del tema de carne y carnecería. Aunque no podemos decir &quot;****&quot; directamente ni referirnos explícitamente a ella, &quot;****adería&quot; se ajusta ligeramente al contexto evitando infravalorar las reglas del juego.
+
+Ahora, investigaré por el impostor considerando que la palabra de Zeta, &quot;feria&quot;, no parece tener una conexión directa con carne o carnecería. Las ferias son eventos generalizados que no se centran específicamente en la caza o consumo de carne, lo cual hace que esta elección sea poco convincente en el contexto del tema &quot;****&quot;. 
+
+Por otro lado, la opción de Delta &quot;carnicería&quot; parece más cercana a la temática, aunque aún no es suficientemente directa. La carnicería se enfoca en la preparación y venta de carne, lo cual está más cerca al tema central que las demás opciones.
+
+Dado que estamos buscando una palabra que pueda desviarse o ser descartada por su falta de conexión con el tema &quot;****&quot;, la elección de Zeta de &quot;feria&quot; parece una tentativa de distraer. La ausencia de un vínculo claro entre la idea central del evento comercial generalizado de la feria y la caza o consumo de carne hace que esta opción sea menos convincente como respuesta a la palabra secreta.
+
+VOTO: Zeta
+RAZON: La elección de &quot;feria&quot; por parte de Zeta no conecta adecuadamente con el tema central de carne y carnecería. Las ferias son eventos multifacéticos sin un enfoque específico en la caza o consumo de carne, lo cual hace que esta respuesta sea descartablemente desconectada del tema &quot;****&quot;. Esta decisión sugiere un intento de ocultar el desconexión de su palabra con el tema central, lo cual considero como un indicativo de que Zeta pueda ser el impostor. 
+
+La ausencia de una conexión clara entre &quot;feria&quot; y &quot;****&quot; deja en claro que esta elección fue</div>
+            </div>
+        
+            <div class="debate-message ">
+                <div class="message-header">
+                    <span class="message-number">#7</span>
+                    <span style="color: #FFA500; font-weight: 600;">Zeta</span>
+                    <span class="message-role role-innocent">Inocente</span>
+                </div>
+                <div class="message-content">Considerando la ausencia de claridad en las palabras seleccionadas por Delta, específicamente &#39;huerto&#39; y &#39;****adería&#39;, podría sugerirse un intento indirecto para engañar al resto de los jugadores. Mientras que estas palabras pueden tener una ligera conexión simbólica con la caza o preparación de carne, como elementos centrales de celebraciones, su falta de especificidad hace que parezcan desconectadas del tema en general. Por otro lado, mi elección &#39;cocina&#39; se relaciona ligeramente con la palabra secreta a través de la preparación y cocción de alimentos.</div>
+            </div>
+        
+            <div class="debate-message impostor">
+                <div class="message-header">
+                    <span class="message-number">#8</span>
+                    <span style="color: #96CEB4; font-weight: 600;">Delta</span>
+                    <span class="message-role role-impostor">Impostor</span>
+                </div>
+                <div class="message-content">Hmm, no estoy seguro.</div>
+            </div>
+        
+            <div class="debate-message ">
+                <div class="message-header">
+                    <span class="message-number">#9</span>
+                    <span style="color: #45B7D1; font-weight: 600;">Gamma</span>
+                    <span class="message-role role-innocent">Inocente</span>
+                </div>
+                <div class="message-content">Defiendo mi palabra &quot;****adería&quot; porque esta relación indirecta con la palabra secreta sugiere una conexión conceptual basada en el concepto de transporte o preparación de carne, un tema central en el debate. Aunque no podemos afirmar explícitamente nuestra palabra, insinuamos una ligera correlación contextual que se alinea con la temática general discutida.
+
+Por otro lado, quiero cuestionar la elección de Zeta de &quot;feria&quot;. Esta opción parece intentar distraer a través de un enfoque genérico y amplio que carece de la especificidad necesaria para encajar adecuadamente dentro del tema central de carne y carnecería. La feria, como evento multifacético, no captura la esencia de caza o consumo de carne que se busca en este contexto.
+
+Finalmente, considero que Delta, con su elección de &quot;carnicería&quot;, aunque también carece de una conexión directa y precisa, representa un intento más convincente y centrado que refleja mejor el espíritu del debate. La carnicería, al enfocarse en la preparación y venta de carne, se aproxima más estrechamente a los temas fundamentales discutidos.
+
+En resumen, mientras que mi defensa de &quot;****adería&quot; se basa en insinuar una relación conceptual relevante, critico el escenario donde Zeta opta por &quot;feria&quot;, considerando esta opción como un intento desaconsejado de distraerse del tema principal. La selección de Zeta no parece reflejar adecuadamente la naturaleza específica y centrada requerida para una participación efectiva en este debate.</div>
+            </div>
+        
+            <div class="debate-message ">
+                <div class="message-header">
+                    <span class="message-number">#10</span>
+                    <span style="color: #FFA500; font-weight: 600;">Zeta</span>
+                    <span class="message-role role-innocent">Inocente</span>
+                </div>
+                <div class="message-content">Considerando la ausencia de claridad en las palabras seleccionadas por Delta, específicamente &#39;huerto&#39; y &#39;****adería&#39;, podría sugerirse un intento indirecto para engañar al resto de los jugadores. Mientras que estas palabras pueden tener una ligera conexión simbólica con la caza o preparación de carne, como elementos centrales de celebraciones, su falta de especificidad hace que parezcan desconectadas del tema en general. Por otro lado, mi elección &#39;cocina&#39; se relaciona ligeramente con la palabra secreta a través de la preparación y cocción de alimentos.</div>
+            </div>
+        
+            <div class="debate-message impostor">
+                <div class="message-header">
+                    <span class="message-number">#11</span>
+                    <span style="color: #96CEB4; font-weight: 600;">Delta</span>
+                    <span class="message-role role-impostor">Impostor</span>
+                </div>
+                <div class="message-content">Hmm, no estoy seguro.</div>
+            </div>
+        
+            <div class="debate-message ">
+                <div class="message-header">
+                    <span class="message-number">#12</span>
+                    <span style="color: #45B7D1; font-weight: 600;">Gamma</span>
+                    <span class="message-role role-innocent">Inocente</span>
+                </div>
+                <div class="message-content">Zeta optó por &quot;feria&quot;, una elección que parece intentar distraer del tema central de carne y carnecería. Las ferias, como eventos generales, no se centran en la caza o consumo de carne, lo cual la convierte en una respuesta poco convincente al contexto del debate.
+
+Por otro lado, mi propio argumento en defensa de una relación conceptual indirecta con &quot;****adería&quot; busca establecer una conexión ligeramente implícita que sea coherente con el tema de transporte o preparación de carne. Aunque no expresamos directamente la palabra secreta (&quot;****&quot;), nos enfocamos en mantener un tono relevante y centrado en relación con los temas discutidos.
+
+Al analizar las opciones de Delta (carnicería) y Gamma (perejil, cerote, pecho), ambos parecen tener un enfoque más directo y apropiado al tema central, contrastando fuertemente con la elección inadecuada de Zeta. La carnicería, representada por Delta, se acerca a la esencia del debate al enfocarse en la preparación y venta de carne.
+
+En conclusión, considero que Zeta no logró conectar adecuadamente su respuesta con el tema central del debate debido a la ausencia de una conexión clara con la caza o consumo de carne. Esta elección sugiere un intento fallido de distraerse del tema principal. Por lo tanto, voy a cuestionar más vigurosamente esta opción y buscar confirmación en la relevancia y coherencia de Zeta&#39;s argumentación frente al contexto específico del debate.</div>
+            </div>
+        
+            <div class="debate-message ">
+                <div class="message-header">
+                    <span class="message-number">#13</span>
+                    <span style="color: #FFA500; font-weight: 600;">Zeta</span>
+                    <span class="message-role role-innocent">Inocente</span>
+                </div>
+                <div class="message-content">Considerando la ausencia de claridad en las palabras seleccionadas por Delta, específicamente &#39;huerto&#39; y &#39;****adería&#39;, podría sugerirse un intento indirecto para engañar al resto de los jugadores. Mientras que estas palabras pueden tener una ligera conexión simbólica con la caza o preparación de carne, como elementos centrales de celebraciones, su falta de especificidad hace que parezcan desconectadas del tema en general. Por otro lado, mi elección &#39;cocina&#39; se relaciona ligeramente con la palabra secreta a través de la preparación y cocción de alimentos.</div>
+            </div>
+        
+            <div class="debate-message impostor">
+                <div class="message-header">
+                    <span class="message-number">#14</span>
+                    <span style="color: #96CEB4; font-weight: 600;">Delta</span>
+                    <span class="message-role role-impostor">Impostor</span>
+                </div>
+                <div class="message-content">Hmm, no estoy seguro.</div>
+            </div>
+        
+            <div class="debate-message ">
+                <div class="message-header">
+                    <span class="message-number">#15</span>
+                    <span style="color: #45B7D1; font-weight: 600;">Gamma</span>
+                    <span class="message-role role-innocent">Inocente</span>
+                </div>
+                <div class="message-content">Zeta eligió &quot;feria&quot;, una elección que parece intentar distraerse del tema centrado en carne y carnecería, dado que las ferias son eventos generales sin foco en la caza o consumo de carne. Esta elección no proporciona un vínculo claro con el tema principal, lo cual sugiere un intento fallido de mantener relevancia.
+
+En contraste, mi argumentación enfatiza una conexión conceptual indirecta con &quot;****adería&quot;, buscando establecer una ligera relación coherente con la preparación o transporte de carne, manteniendo el tono relevante en relación con los temas discutidos. Aunque no expresamos explícitamente la palabra secreta (&quot;****&quot;), nuestra proposición busca mantener la conversación dentro del ámbito de los temas relevantes.
+
+Al analizar las opciones de Delta (carnicería) y Gamma (perejil, cerote, pecho), ambas parecen tener un enfoque más directo y apropiado al tema central, contrastando fuertemente con la elección inadecuada de Zeta. La carnicería, representada por Delta, se acerca a la esencia del debate al enfocarse en la preparación y venta de carne.
+
+Por lo tanto, veo que Zeta no logró conectar adecuadamente su respuesta con el tema central del debate debido a la ausencia de una conexión clara con la caza o consumo de carne. Esta elección sugiere un intento fallido de distraerse del tema principal. Por consiguiente, voy a cuestionar más vigurosamente esta opción y buscar confirmación en la relevancia y coherencia de Zeta&#39;s argumentación frente al contexto específico del debate.</div>
+            </div>
+        </div>
+        </div>
+
+        <!-- Votes -->
+        <div class="section">
+            <h2>🗳️ Votación</h2>
+            <div class="votes-list">
+            <div class="vote-card">
+                <div class="vote-header">
+                    <span style="color: #FFA500; font-weight: 600;">Zeta</span>
+                    <span class="vote-arrow">→</span>
+                    <span style="color: #96CEB4; font-weight: 600;">Delta</span>
+                </div>
+                <div class="vote-justification">"Durante el debate, se observó que la elección de &quot;feria&quot; no presentaba una conexión clara con el tema central del debate. Además, su respuesta pareció intentar distraer al resto del equipo en lugar de responder adecuadamente al tema de carne y carnecería. Por otro lado, las elecciones de Delta y Gamma parecieron más coherentes con el contexto debido a sus argumentos relevantes y centrados en torno al tema principal. La falta de especificidad en la elección de Zeta sugiere un posible intento de ocultar la falta de conexión con la palabra secreta, lo cual considero como un indicativo de que puede ser el impostor."</div>
+            </div>
+        
+            <div class="vote-card">
+                <div class="vote-header">
+                    <span style="color: #96CEB4; font-weight: 600;">Delta</span>
+                    <span class="vote-arrow">→</span>
+                    <span style="color: #FFA500; font-weight: 600;">Zeta</span>
+                </div>
+                <div class="vote-justification">"Su palabra &quot;feria&quot; ha sido consistentemente la más desconectada del tema y sus defensas son evasivas, intentando justificar una elección que no encaja con el patrón. Parece estar tratando de desviar la atención."</div>
+            </div>
+        
+            <div class="vote-card">
+                <div class="vote-header">
+                    <span style="color: #45B7D1; font-weight: 600;">Gamma</span>
+                    <span class="vote-arrow">→</span>
+                    <span style="color: #FFA500; font-weight: 600;">Zeta</span>
+                </div>
+                <div class="vote-justification">"Zeta eligió &quot;feria&quot;, un término general que carece de conexión con el tema específico de carne y carnecería. Esta elección es inconsistentemente desafiante frente a las demás opciones, que intentan establecer una ligera relación conceptual coherente con la temática del debate. Además, Zeta no logró justificar adecuadamente su escogida en términos de coherencia o conexión directa con los temas discutidos, lo cual sugiere un intento de distraerse del tema central. La elección de &quot;feria&quot; como respuesta a la palabra secreta parece más una estrategia evasiva que una contribución constructiva al debate."</div>
+            </div>
+        </div>
+        </div>
+
+        
+        <div class="section">
+            <h2>🏆 Puntuaciones</h2>
+            <table class="leaderboard-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Modelo</th>
+                        <th>Victorias</th>
+                        <th>Partidas</th>
+                        <th>% Victoria</th>
+                    </tr>
+                </thead>
+                <tbody>
+    
+            <tr>
+                <td class="leaderboard-rank">🥇</td>
+                <td>gemma3:12b</td>
+                <td>0</td>
+                <td>0</td>
+                <td>0.0%</td>
+            </tr>
+        
+            <tr>
+                <td class="leaderboard-rank">🥈</td>
+                <td>gemma3:4b</td>
+                <td>0</td>
+                <td>0</td>
+                <td>0.0%</td>
+            </tr>
+        
+            <tr>
+                <td class="leaderboard-rank">🥉</td>
+                <td>olmo2:7b</td>
+                <td>0</td>
+                <td>0</td>
+                <td>0.0%</td>
+            </tr>
+        
+            <tr>
+                <td class="leaderboard-rank">4</td>
+                <td>qwen3:8b</td>
+                <td>0</td>
+                <td>0</td>
+                <td>0.0%</td>
+            </tr>
+        
+            <tr>
+                <td class="leaderboard-rank">5</td>
+                <td>llama3.2:3b-instruct-q4_0</td>
+                <td>0</td>
+                <td>0</td>
+                <td>0.0%</td>
+            </tr>
+        
+            <tr>
+                <td class="leaderboard-rank">6</td>
+                <td>mistral:7b</td>
+                <td>0</td>
+                <td>0</td>
+                <td>0.0%</td>
+            </tr>
+        
+            <tr>
+                <td class="leaderboard-rank">7</td>
+                <td>dolphin-mistral:7b</td>
+                <td>0</td>
+                <td>0</td>
+                <td>0.0%</td>
+            </tr>
+        
+            <tr>
+                <td class="leaderboard-rank">8</td>
+                <td>solar:10.7b</td>
+                <td>0</td>
+                <td>0</td>
+                <td>0.0%</td>
+            </tr>
+        
+            <tr>
+                <td class="leaderboard-rank">9</td>
+                <td>neural-chat:7b</td>
+                <td>0</td>
+                <td>0</td>
+                <td>0.0%</td>
+            </tr>
+        
+                </tbody>
+            </table>
+        </div>
+    
+
+        <!-- Footer -->
+        <div class="footer">
+            <p>Generado por <a href="https://github.com/your-repo/impostor-llm">Impostor LLM</a></p>
+        </div>
+    </div>
+</body>
+</html>
