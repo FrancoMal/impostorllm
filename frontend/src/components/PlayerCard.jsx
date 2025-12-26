@@ -1,13 +1,21 @@
 import React from 'react'
 import { motion } from 'framer-motion'
 
-const PLAYER_ICONS = {
-  'gemma3': '💎',
-  'mistral': '🌪️',
-  'llama3': '🦙',
-  'phi4': 'Φ',
-  'qwen3': '🐼',
-  'human': '👤',
+// Map Greek letters to their icons
+const GREEK_ICONS = {
+  'Alfa': '🅰️',
+  'Beta': '🅱️',
+  'Gamma': 'Γ',
+  'Delta': 'Δ',
+  'Epsilon': 'Ε',
+  'Zeta': 'Ζ',
+  'Sigma': 'Σ',
+}
+
+// Format model name for display (e.g., "mistral:7b" → "mistral")
+const getShortModelName = (model) => {
+  if (!model || model === 'human') return null
+  return model.split(':')[0]
 }
 
 export default function PlayerCard({
@@ -17,7 +25,9 @@ export default function PlayerCard({
   showWord = false,
   position = 0,
 }) {
-  const icon = PLAYER_ICONS[player.display_name] || '🤖'
+  // Get Greek letter icon or fallback
+  const icon = player.is_human ? '👤' : (GREEK_ICONS[player.display_name] || '🤖')
+  const modelName = getShortModelName(player.model)
 
   return (
     <motion.div
@@ -45,8 +55,15 @@ export default function PlayerCard({
 
       {/* Name */}
       <div className="text-sm font-medium mt-1">
-        ({player.display_name})
+        {player.display_name}
       </div>
+
+      {/* Model name (only for AI players) */}
+      {modelName && !player.is_human && (
+        <div className="text-xs text-gray-400 mt-0.5">
+          {modelName}
+        </div>
+      )}
 
       {/* Words said */}
       {player.words_said && player.words_said.length > 0 && (

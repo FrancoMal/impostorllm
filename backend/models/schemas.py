@@ -119,11 +119,15 @@ class WSMessage(BaseModel):
 class GameConfig(BaseModel):
     mode: GameMode = GameMode.ALL_AI
     debate_duration: int = 60
-    human_position: int = 0  # 0-4, only used in HUMAN_PLAYER mode
+    human_position: int = 0  # 0-6, only used in HUMAN_PLAYER mode
     human_name: str = "Jugador"  # Custom name for human player
     selected_players: list[str] = []  # List of display_names to include (empty = use defaults)
     single_model: str = ""  # If set, use this model for all players (e.g., "qwen3:8b")
-    player_count: int = 5  # Number of players for single_model mode (3-6)
+    player_count: int = 5  # Number of players for single_model mode (3-7)
+    # New: Custom player models - each position gets a Greek letter name
+    # e.g., ["mistral:7b", "gemma3:4b", "qwen3:8b"] → Alfa=mistral, Beta=gemma3, Gamma=qwen3
+    custom_players: list[str] = []  # List of model names for each player slot
+    auto_repeat: bool = False  # Auto-restart games
 
 
 class LeaderboardEntry(BaseModel):

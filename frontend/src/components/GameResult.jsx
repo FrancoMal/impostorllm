@@ -5,17 +5,25 @@ import Leaderboard from './Leaderboard'
 
 const AUTO_CONTINUE_SECONDS = 5
 
-const PLAYER_ICONS = {
-  'gemma3': '💎',
-  'mistral': '🌪️',
-  'llama3': '🦙',
-  'phi4': 'Φ',
-  'qwen3': '🐼',
+// Map Greek letters to their icons
+const GREEK_ICONS = {
+  'Alfa': '🅰️',
+  'Beta': '🅱️',
+  'Gamma': 'Γ',
+  'Delta': 'Δ',
+  'Epsilon': 'Ε',
+  'Zeta': 'Ζ',
+  'Sigma': 'Σ',
 }
 
 const getPlayerIcon = (player) => {
   if (player?.is_human) return '👤'
-  return PLAYER_ICONS[player?.display_name] || '🤖'
+  return GREEK_ICONS[player?.display_name] || '🤖'
+}
+
+const getModelName = (player) => {
+  if (!player?.model || player.model === 'human') return null
+  return player.model.split(':')[0]
 }
 
 export default function GameResult({ onNewGame, onContinue }) {
@@ -110,7 +118,12 @@ export default function GameResult({ onNewGame, onContinue }) {
                 >
                   {getPlayerIcon(impostor)}
                 </div>
-                <span className="font-medium">({impostor?.display_name})</span>
+                <div>
+                  <span className="font-medium">{impostor?.display_name}</span>
+                  {getModelName(impostor) && (
+                    <span className="text-xs text-gray-400 ml-1">({getModelName(impostor)})</span>
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -142,7 +155,10 @@ export default function GameResult({ onNewGame, onContinue }) {
                 }`}
               >
                 <span style={{ color: player.color }}>
-                  {player.display_name}:
+                  {player.display_name}
+                  {getModelName(player) && (
+                    <span className="text-gray-500 text-xs"> ({getModelName(player)})</span>
+                  )}:
                 </span>
                 <span className="text-gray-300">
                   {player.words_said?.join(', ') || '-'}

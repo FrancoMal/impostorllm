@@ -2,12 +2,15 @@ import React, { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useGame } from '../context/GameContext'
 
-const PLAYER_ICONS = {
-  'gemma3': '💎',
-  'mistral': '🌪️',
-  'llama3': '🦙',
-  'phi4': 'Φ',
-  'qwen3': '🐼',
+// Map Greek letters to their icons
+const GREEK_ICONS = {
+  'Alfa': '🅰️',
+  'Beta': '🅱️',
+  'Gamma': 'Γ',
+  'Delta': 'Δ',
+  'Epsilon': 'Ε',
+  'Zeta': 'Ζ',
+  'Sigma': 'Σ',
 }
 
 function LiveVotesDisplay({ liveVotes, players }) {
@@ -15,9 +18,11 @@ function LiveVotesDisplay({ liveVotes, players }) {
 
   const getPlayerInfo = (name) => {
     const player = players?.find(p => p.display_name === name)
+    const modelName = player?.model && player.model !== 'human' ? player.model.split(':')[0] : null
     return {
       color: player?.color || '#fff',
-      icon: player?.is_human ? '👤' : (PLAYER_ICONS[name] || '🤖')
+      icon: player?.is_human ? '👤' : (GREEK_ICONS[name] || '🤖'),
+      modelName
     }
   }
 
@@ -38,13 +43,16 @@ function LiveVotesDisplay({ liveVotes, players }) {
                 className="bg-gray-700/50 rounded-lg px-4 py-3"
               >
                 {/* Vote header */}
-                <div className="flex items-center gap-2 text-sm">
+                <div className="flex items-center gap-2 text-sm flex-wrap">
                   <span
                     className="flex items-center gap-1"
                     style={{ color: voter.color }}
                   >
                     {voter.icon}
                     <span className="font-medium">{vote.voter_name}</span>
+                    {voter.modelName && (
+                      <span className="text-xs text-gray-500">({voter.modelName})</span>
+                    )}
                   </span>
                   <span className="text-gray-500">vota por</span>
                   <span
@@ -53,6 +61,9 @@ function LiveVotesDisplay({ liveVotes, players }) {
                   >
                     {votedFor.icon}
                     <span className="font-medium">{vote.voted_for_name}</span>
+                    {votedFor.modelName && (
+                      <span className="text-xs text-gray-500">({votedFor.modelName})</span>
+                    )}
                   </span>
                 </div>
                 {/* Justification */}
@@ -146,10 +157,15 @@ export default function VotingPanel({ onVote }) {
               className="w-10 h-10 rounded-full flex items-center justify-center text-lg"
               style={{ backgroundColor: player.color }}
             >
-              {player.is_human ? '👤' : (PLAYER_ICONS[player.display_name] || '🤖')}
+              {player.is_human ? '👤' : (GREEK_ICONS[player.display_name] || '🤖')}
             </div>
             <div>
-              <div className="font-medium">({player.display_name})</div>
+              <div className="font-medium">{player.display_name}</div>
+              {player.model && player.model !== 'human' && (
+                <div className="text-xs text-gray-500">
+                  {player.model.split(':')[0]}
+                </div>
+              )}
               <div className="text-xs text-gray-400">
                 {player.words_said?.join(', ') || 'Sin palabras'}
               </div>
@@ -164,7 +180,7 @@ export default function VotingPanel({ onVote }) {
         className="w-full py-3 bg-red-600 hover:bg-red-700 disabled:bg-gray-600 disabled:cursor-not-allowed rounded-lg font-medium transition-colors"
       >
         {selectedPlayer ? (
-          <>🗳️ Votar por ({state.players.find(p => p.id === selectedPlayer)?.display_name})</>
+          <>🗳️ Votar por {state.players.find(p => p.id === selectedPlayer)?.display_name}</>
         ) : (
           'Selecciona un jugador'
         )}

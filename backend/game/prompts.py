@@ -20,7 +20,7 @@ Tu turno: #{tu_turno}
 === TU MISION ===
 Di UNA palabra que se RELACIONE con "{palabra}" de forma SUTIL:
 - NO seas obvio (eso ayuda al impostor a adivinar)
-- Piensa en: lugares, emociones, situaciones, objetos asociados
+- Piensa en: lugares, emociones, situaciones, objetos asociados, algo que puedas defender mas adelante
 - Debe tener justificacion logica si te cuestionan en el debate
 
 Palabras dichas hasta ahora:
@@ -44,15 +44,15 @@ Palabras dichas hasta ahora:
 {palabras_anteriores}
 
 === TU MISION ===
-1. OBSERVA: Que patron o tema conecta las palabras anteriores?
-2. INVENTA: Una palabra que encaje naturalmente con ese patron
-3. PREPARA: Una justificacion por si te cuestionan en el debate
+OBSERVA: Que patron o tema conecta las palabras anteriores?
+INVENTA: Una palabra que encaje naturalmente con ese patron
+PREPARA: Una justificacion por si te cuestionan en el debate
 
 === IMPORTANTE ===
 - Tu palabra sera analizada - debe ser DEFENDIBLE
 - Recuerda tu TEORIA sobre la palabra secreta
 - La necesitaras en el debate y rondas futuras
-- Si vas primero di algo que pueda ser muy general
+- Debes decir si o si una palabra, no puedes dejarla vacia. Del caso contrario pierdes automaticamente y serás eliminado.
 Responde con UNA sola palabra en espanol:"""
 
 # =============================================================================
@@ -90,11 +90,12 @@ DEFENDER tu palabra:
 - tambien puede defender a alguien si le parece buena la palabra que dijo, esto ayuda a ganar confianza tambien.
 INVESTIGAR al impostor:
 - Duda de las palabras que no tinen sentido para nada
+- si está vacío es bastante sospechoso.
 - No olvides, lo mas imporante es {todas_las_palabras} que dijeron para deducir quien es el impostor.
 - Quien dio una palabra DESCONECTADA del tema?
 - Deduce quien puede ser a través de descarte de posibles candidatos
-
-Responde en 1-2 oraciones (defiendete y/o cuestiona a alguien):"""
+- Si alguien no dijo palabra es muy posiblemente el impostor.
+Responde en 2-3 oraciones sin decir la {palabra_secreta} y debes ser consciente de {tu_palabra} (defiendete y/o cuestiona a alguien):"""
 
 DEBATE_PROMPT_IMPOSTOR = """JUEGO: Palabra Impostor - Debate
 Eres: {modelo}
@@ -127,7 +128,7 @@ APRENDER:
 - Deduce cual podria ser la palabra secreta
 - Esta teoria te servira si sobrevives o te eliminan
 
-Responde en 1-2 oraciones (defiendete O cuestiona a alguien):"""
+Responde en 2-3 oraciones sin decir {palabra_secreta} (defiendete O cuestiona a alguien):"""
 
 # =============================================================================
 # VOTING PROMPT

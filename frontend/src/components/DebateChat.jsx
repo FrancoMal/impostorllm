@@ -2,17 +2,160 @@ import React, { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useGame } from '../context/GameContext'
 
-const PLAYER_ICONS = {
-  'gemma3': '💎',
-  'mistral': '🌪️',
-  'llama3': '🦙',
-  'phi4': 'Φ',
-  'qwen3': '🐼',
+// Map Greek letters to their icons
+const GREEK_ICONS = {
+  'Alfa': '🅰️',
+  'Beta': '🅱️',
+  'Gamma': 'Γ',
+  'Delta': 'Δ',
+  'Epsilon': 'Ε',
+  'Zeta': 'Ζ',
+  'Sigma': 'Σ',
+}
+
+// Normalize string: remove accents and convert to lowercase
+function normalizeString(str) {
+  return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+}
+
+// Check if character is a word character (letters, numbers, accented chars)
+function isWordChar(char) {
+  if (!char) return false
+  return /[\p{L}\p{N}]/u.test(char)
+}
+
+// Function to highlight player names and words in message
+function highlightMessage(message, players) {
+  if (!message || !players || players.length === 0) {
+    return message
+  }
+
+  // Collect all terms to highlight: player names and their words
+  const highlights = []
+
+  players.forEach(player => {
+    // Add player name
+    highlights.push({
+      term: player.display_name,
+      normalizedTerm: normalizeString(player.display_name),
+      color: player.color,
+      isName: true
+    })
+
+    // Add words said by this player
+    if (player.words_said && player.words_said.length > 0) {
+      player.words_said.forEach(word => {
+        highlights.push({
+          term: word,
+          normalizedTerm: normalizeString(word),
+          color: player.color,
+          isName: false
+        })
+      })
+    }
+  })
+
+  // Sort by length (longer terms first to avoid partial matches)
+  highlights.sort((a, b) => b.normalizedTerm.length - a.normalizedTerm.length)
+
+  if (highlights.length === 0) return message
+
+  // Find all matches with their positions
+  const normalizedMessage = normalizeString(message)
+  const matches = []
+
+  for (const highlight of highlights) {
+    const searchTerm = highlight.normalizedTerm
+    let startIndex = 0
+
+    while (startIndex < normalizedMessage.length) {
+      const foundIndex = normalizedMessage.indexOf(searchTerm, startIndex)
+      if (foundIndex === -1) break
+
+      // Check word boundaries (not part of a larger word)
+      const charBefore = normalizedMessage[foundIndex - 1]
+      const charAfter = normalizedMessage[foundIndex + searchTerm.length]
+
+      const isWordStart = !isWordChar(charBefore)
+      const isWordEnd = !isWordChar(charAfter)
+
+      if (isWordStart && isWordEnd) {
+        // Check if this position overlaps with an existing match
+        const overlaps = matches.some(m =>
+          (foundIndex >= m.start && foundIndex < m.end) ||
+          (foundIndex + searchTerm.length > m.start && foundIndex + searchTerm.length <= m.end)
+        )
+
+        if (!overlaps) {
+          matches.push({
+            start: foundIndex,
+            end: foundIndex + searchTerm.length,
+            color: highlight.color
+          })
+        }
+      }
+
+      startIndex = foundIndex + 1
+    }
+  }
+
+  // Sort matches by position
+  matches.sort((a, b) => a.start - b.start)
+
+  // Build result array
+  const result = []
+  let lastIndex = 0
+
+  // We need to map normalized positions back to original message
+  // Since normalization can change string length (é -> e removes combining char)
+  // We'll build a position map
+  const posMap = [] // posMap[normalizedIndex] = originalIndex
+  let normalizedIdx = 0
+  for (let i = 0; i < message.length; i++) {
+    const char = message[i]
+    const normalizedChar = normalizeString(char)
+    for (let j = 0; j < normalizedChar.length; j++) {
+      posMap[normalizedIdx + j] = i
+    }
+    normalizedIdx += normalizedChar.length
+  }
+  posMap[normalizedIdx] = message.length // End position
+
+  for (const match of matches) {
+    const origStart = posMap[match.start]
+    const origEnd = posMap[match.end] !== undefined ? posMap[match.end] : message.length
+
+    // Add text before match
+    if (origStart > lastIndex) {
+      result.push(message.slice(lastIndex, origStart))
+    }
+
+    // Add highlighted match
+    result.push(
+      <span
+        key={`match-${match.start}`}
+        className="font-bold"
+        style={{ color: match.color }}
+      >
+        {message.slice(origStart, origEnd)}
+      </span>
+    )
+
+    lastIndex = origEnd
+  }
+
+  // Add remaining text
+  if (lastIndex < message.length) {
+    result.push(message.slice(lastIndex))
+  }
+
+  return result.length > 0 ? result : message
 }
 
 export default function DebateChat({ onSendMessage }) {
   const { state } = useGame()
   const [message, setMessage] = useState('')
+  const [isExpanded, setIsExpanded] = useState(false)
   const chatRef = useRef(null)
 
   const humanPlayer = state.players.find(p => p.is_human)
@@ -49,13 +192,19 @@ export default function DebateChat({ onSendMessage }) {
               Ronda {state.debateRound}/5
             </span>
           )}
+          <button
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="text-xs text-gray-400 hover:text-white bg-gray-700 hover:bg-gray-600 px-2 py-1 rounded-full transition-colors"
+          >
+            {isExpanded ? '🔽 Colapsar' : '🔼 Expandir'}
+          </button>
         </div>
       </div>
 
       {/* Messages Container */}
       <div
         ref={chatRef}
-        className="h-80 overflow-y-auto p-4 space-y-3 scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-gray-800"
+        className={`${isExpanded ? 'max-h-[70vh]' : 'h-80'} overflow-y-auto p-4 space-y-3 scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-gray-800 transition-all duration-300`}
       >
         <AnimatePresence initial={false}>
           {state.debateMessages.length === 0 ? (
@@ -69,7 +218,8 @@ export default function DebateChat({ onSendMessage }) {
               // Find player by name to get their properties
               const player = state.players.find(p => p.display_name === msg.player_name)
               const color = player?.color || '#888'
-              const icon = player?.is_human ? '👤' : (PLAYER_ICONS[msg.player_name] || '🤖')
+              const icon = player?.is_human ? '👤' : (GREEK_ICONS[msg.player_name] || '🤖')
+              const modelName = player?.model && player.model !== 'human' ? player.model.split(':')[0] : null
 
               return (
                 <motion.div
@@ -87,7 +237,7 @@ export default function DebateChat({ onSendMessage }) {
                     }}
                   >
                     {/* Player Header */}
-                    <div className="flex items-center gap-2 mb-2">
+                    <div className="flex items-center gap-2 mb-2 flex-wrap">
                       <div
                         className="w-8 h-8 rounded-full flex items-center justify-center text-sm shadow-md"
                         style={{ backgroundColor: color }}
@@ -100,14 +250,33 @@ export default function DebateChat({ onSendMessage }) {
                       >
                         {msg.player_name}
                       </span>
-                      <span className="text-xs text-gray-500">
+                      {modelName && (
+                        <span className="text-xs text-gray-500">
+                          ({modelName})
+                        </span>
+                      )}
+                      <span className="text-xs text-gray-600">
                         #{index + 1}
                       </span>
+                      {/* Impostor/Inocente label */}
+                      <span className={`text-xs font-bold px-2 py-0.5 rounded ${
+                        player?.id === state.impostorId
+                          ? 'bg-red-900/50 text-red-400'
+                          : 'bg-green-900/50 text-green-400'
+                      }`}>
+                        {player?.id === state.impostorId ? '🎭 Impostor' : '✓ Inocente'}
+                      </span>
+                      {/* Words said */}
+                      {player?.words_said && player.words_said.length > 0 && (
+                        <span className="text-xs text-gray-400 bg-gray-700/50 px-2 py-0.5 rounded">
+                          💬 {player.words_said.join(', ')}
+                        </span>
+                      )}
                     </div>
 
                     {/* Message Content */}
                     <p className="text-gray-200 text-sm leading-relaxed pl-10">
-                      {msg.message}
+                      {highlightMessage(msg.message, state.players)}
                     </p>
                   </div>
                 </motion.div>

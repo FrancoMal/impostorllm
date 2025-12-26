@@ -67,6 +67,11 @@ export default function SpectatorInfo() {
                       >
                         {impostor.display_name}
                       </span>
+                      {impostor.model && impostor.model !== 'human' && (
+                        <span className="text-xs text-gray-400">
+                          ({impostor.model.split(':')[0]})
+                        </span>
+                      )}
                     </>
                   )}
                 </div>

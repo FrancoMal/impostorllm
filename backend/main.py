@@ -14,9 +14,11 @@ from fastapi.responses import FileResponse
 
 from models.schemas import GameConfig, GameMode, WSMessageType
 from game.state import game_manager
-from game.logic import GameController
+# Use logic2 for chat-based context (persistent memory per player)
+# To use the old system, change to: from game.logic import GameController
+from game.logic2 import GameController2 as GameController
 from llm.ollama_client import call_llm, ollama_client
-from llm.players import LLM_PLAYERS, DEFAULT_PLAYERS, SINGLE_MODEL_PLAYERS
+from llm.players import LLM_PLAYERS, DEFAULT_PLAYERS
 
 
 # Store active WebSocket connections per game
@@ -73,9 +75,25 @@ async def health_check():
     }
 
 
+@app.get("/api/test-sigma")
+async def test_sigma():
+    """Test endpoint to verify server is running new code."""
+    return {"last_player": "Sigma", "message": "If you see this, server has new code"}
+
+
 @app.get("/api/players")
 async def get_available_players():
     """Get all available LLM players for selection."""
+    # Hardcode Greek players to avoid any caching issues
+    GREEK_PLAYERS_DIRECT = [
+        {"name": "Alfa", "color": "#FF6B6B", "icon": "🅰️"},
+        {"name": "Beta", "color": "#4ECDC4", "icon": "🅱️"},
+        {"name": "Gamma", "color": "#45B7D1", "icon": "Γ"},
+        {"name": "Delta", "color": "#96CEB4", "icon": "Δ"},
+        {"name": "Epsilon", "color": "#DDA0DD", "icon": "Ε"},
+        {"name": "Zeta", "color": "#FFA500", "icon": "Ζ"},
+        {"name": "Sigma", "color": "#FF69B4", "icon": "Σ"},
+    ]
     return {
         "players": [
             {
@@ -87,8 +105,19 @@ async def get_available_players():
             for p in LLM_PLAYERS
         ],
         "defaults": DEFAULT_PLAYERS,
-        "single_model_names": SINGLE_MODEL_PLAYERS,  # For single-model mode
-        "available_models": [p.model for p in LLM_PLAYERS]  # Models for single-model selection
+        "single_model_names": GREEK_PLAYERS_DIRECT,  # For single-model mode
+        "available_models": [p.model for p in LLM_PLAYERS],  # Models for single-model selection
+        "greek_players": GREEK_PLAYERS_DIRECT  # Greek letter names with colors/icons
+    }
+
+
+@app.get("/api/ollama/models")
+async def get_ollama_models():
+    """Get list of models installed in Ollama."""
+    models = await ollama_client.list_models()
+    return {
+        "models": models,
+        "available": len(models) > 0
     }
 
 

@@ -92,15 +92,19 @@ HUMAN_PLAYER = LLMPlayerConfig(
 )
 
 
-# Single-model player templates (for when all players use the same model)
-SINGLE_MODEL_PLAYERS = [
+# Greek letter player templates (for custom player selection)
+GREEK_PLAYERS = [
     {"name": "Alfa", "color": "#FF6B6B", "icon": "🅰️"},
     {"name": "Beta", "color": "#4ECDC4", "icon": "🅱️"},
-    {"name": "Gamma", "color": "#45B7D1", "icon": "Ⓖ"},
-    {"name": "Delta", "color": "#96CEB4", "icon": "🔺"},
-    {"name": "Epsilon", "color": "#DDA0DD", "icon": "Ⓔ"},
-    {"name": "Zeta", "color": "#FFA500", "icon": "Ⓩ"},
+    {"name": "Gamma", "color": "#45B7D1", "icon": "Γ"},
+    {"name": "Delta", "color": "#96CEB4", "icon": "Δ"},
+    {"name": "Epsilon", "color": "#DDA0DD", "icon": "Ε"},
+    {"name": "Zeta", "color": "#FFA500", "icon": "Ζ"},
+    {"name": "Sigma", "color": "#FF69B4", "icon": "Σ"},
 ]
+
+# Alias for backward compatibility
+SINGLE_MODEL_PLAYERS = GREEK_PLAYERS
 
 
 def get_single_model_configs(model: str, count: int = 5) -> list[LLMPlayerConfig]:
@@ -108,6 +112,31 @@ def get_single_model_configs(model: str, count: int = 5) -> list[LLMPlayerConfig
     configs = []
     for i in range(min(count, len(SINGLE_MODEL_PLAYERS))):
         template = SINGLE_MODEL_PLAYERS[i]
+        configs.append(LLMPlayerConfig(
+            model=model,
+            display_name=template["name"],
+            color=template["color"],
+            icon=template["icon"]
+        ))
+    return configs
+
+
+def get_custom_player_configs(player_models: list[str]) -> list[LLMPlayerConfig]:
+    """
+    Generate player configs from a list of models chosen by the user.
+    Each player gets a Greek letter name based on their position.
+
+    Args:
+        player_models: List of model names (e.g., ["mistral:7b", "gemma3:4b", "mistral:7b"])
+
+    Returns:
+        List of LLMPlayerConfig with Greek names and chosen models
+    """
+    configs = []
+    for i, model in enumerate(player_models):
+        if i >= len(GREEK_PLAYERS):
+            break
+        template = GREEK_PLAYERS[i]
         configs.append(LLMPlayerConfig(
             model=model,
             display_name=template["name"],

@@ -9,7 +9,7 @@ from models.schemas import (
     DebateMessage, Vote, GameConfig
 )
 from game.words import get_random_word
-from llm.players import LLM_PLAYERS, DEFAULT_PLAYERS, get_player_config, get_single_model_configs
+from llm.players import LLM_PLAYERS, DEFAULT_PLAYERS, get_player_config, get_single_model_configs, get_custom_player_configs, GREEK_PLAYERS
 
 # Points configuration
 POINTS = {
@@ -52,11 +52,15 @@ class GameManager:
         """Create a new game with the given configuration."""
         game_id = str(uuid.uuid4())[:8]
 
-        # Check for single-model mode
-        if config.single_model:
+        # Priority 1: Custom players (new mode - user selects model for each slot)
+        if config.custom_players and len(config.custom_players) >= 3:
+            player_configs = get_custom_player_configs(config.custom_players)
+        # Priority 2: Single-model mode (all players use same model)
+        elif config.single_model:
             # Use the same model for all players with different names
-            player_count = max(3, min(6, config.player_count))
+            player_count = max(3, min(7, config.player_count))
             player_configs = get_single_model_configs(config.single_model, player_count)
+        # Priority 3: Selected players by display name (legacy mode)
         else:
             # Determine which players to use (normal mode)
             selected_names = config.selected_players if config.selected_players else DEFAULT_PLAYERS
@@ -390,14 +394,38 @@ class GameManager:
         for player in game.players:
             if player.id == player_id:
                 player.score += points
-                if not player.is_human and player.model in self.leaderboard:
-                    self.leaderboard[player.model]["score"] += points
+                if not player.is_human:
+                    # Ensure model exists in leaderboard for dynamic models
+                    self._ensure_model_in_leaderboard(player.model)
+                    if player.model in self.leaderboard:
+                        self.leaderboard[player.model]["score"] += points
                 break
 
     def _increment_stat(self, model: str, stat: str):
         """Increment a leaderboard stat."""
+        # Ensure model exists in leaderboard (for dynamic models not in LLM_PLAYERS)
+        self._ensure_model_in_leaderboard(model)
         if model in self.leaderboard and stat in self.leaderboard[model]:
             self.leaderboard[model][stat] += 1
+
+    def _ensure_model_in_leaderboard(self, model: str):
+        """Ensure a model exists in the leaderboard (for dynamic models)."""
+        if model not in self.leaderboard and model != "human":
+            # Create entry for new model
+            display_name = model.split(":")[0]  # e.g., "mistral:7b" → "mistral"
+            self.leaderboard[model] = {
+                "model": model,
+                "display_name": display_name,
+                "color": "#808080",  # Default gray for unknown models
+                "score": 0,
+                "games_played": 0,
+                "wins_as_innocent": 0,
+                "wins_as_impostor": 0,
+                "times_impostor": 0,
+                "correct_guesses": 0,
+                "correct_votes": 0,
+                "total_votes": 0,
+            }
 
     def get_leaderboard(self) -> list[dict]:
         """Get the current leaderboard sorted by score."""
